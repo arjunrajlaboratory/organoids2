@@ -1,11 +1,11 @@
 function data = get_bud_and_cyst_segmentation(data)
 
     % if there are NO bud segmentations:
-    if ischar(data.segmentations.buds.segmentations_2D)
+    if ischar(data.segmentations.buds)
         
         % the cyst segmentations are exactly the same as the organoid
         % segmentations:
-        data.segmentations.cyst.segmentations_2D = data.segmentations.organoid.segmentations_2D;
+        data.segmentations.cyst = data.segmentations.organoid;
         
     % otherwise:
     else
@@ -20,26 +20,26 @@ function data = get_bud_and_cyst_segmentation(data)
         % add the organoid segmentation to the mask (I don't use poly2mask
         % because the algorithm sometimes does not fill the exact
         % coordinates):
-        for i = 1:numel(data.segmentations.organoid.segmentations_2D)
-            for j = 1:size(data.segmentations.organoid.segmentations_2D(i).mask, 1)
-                mask(data.segmentations.organoid.segmentations_2D(i).mask(j,1), data.segmentations.organoid.segmentations_2D(i).mask(j,2), data.segmentations.organoid.segmentations_2D(i).mask(j,3)) = 1;
+        for i = 1:numel(data.segmentations.organoid)
+            for j = 1:size(data.segmentations.organoid(i).mask, 1)
+                mask(data.segmentations.organoid(i).mask(j,1), data.segmentations.organoid(i).mask(j,2), data.segmentations.organoid(i).mask(j,3)) = 1;
             end
         end
         
         % for each bud:
-        for i = 1:numel(data.segmentations.buds.segmentations_2D)
+        for i = 1:numel(data.segmentations.buds)
 
             % for each coordinate:
-            for j = 1:size(data.segmentations.buds.segmentations_2D(i).mask, 1)
+            for j = 1:size(data.segmentations.buds(i).mask, 1)
                 
                 % get the coordinate:
-                coord = data.segmentations.buds.segmentations_2D(i).mask(j,:);
+                coord = data.segmentations.buds(i).mask(j,:);
                 
                 % if the pixel overlaps with the organoid segmentation:
                 if mask(coord(:,1), coord(:,2), coord(:,3)) == 1
                     
                     % set the pixel to the bud number:
-                    mask(coord(:,1), coord(:,2), coord(:,3)) = data.segmentations.buds.segmentations_2D(i).object_num + 1;
+                    mask(coord(:,1), coord(:,2), coord(:,3)) = data.segmentations.buds(i).object_num + 1;
                     
                 end
                 
@@ -89,7 +89,7 @@ function data = get_bud_and_cyst_segmentation(data)
         
         % save:
         segmentations_cyst(1) = [];
-        data.segmentations.cyst.segmentations_2D = segmentations_cyst;
+        data.segmentations.cyst = segmentations_cyst;
         
         %%% Next, we want to get the segmentations of the buds (all the mask
         %%% pixels > 1).
@@ -142,7 +142,7 @@ function data = get_bud_and_cyst_segmentation(data)
         
         % save:
         segmentations_bud(1) = [];
-        data.segmentations.buds.segmentations_2D = segmentations_bud;
+        data.segmentations.buds = segmentations_bud;
         
     end
     

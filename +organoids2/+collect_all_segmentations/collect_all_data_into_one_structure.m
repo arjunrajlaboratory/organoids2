@@ -30,7 +30,7 @@ function data = collect_all_data_into_one_structure(name_stack)
         end
         
         % save segmentation:
-        segmentations.(name_segmentation).segmentations_2D = segmentations_temp_2D;
+        segmentations.(name_segmentation) = segmentations_temp_2D;
         
     end
         
@@ -44,13 +44,13 @@ function data = collect_all_data_into_one_structure(name_stack)
         name_cell = list_folders_cells(i).name;
         
         % load the cell file:
-        cells_temp_2D = organoids2.utilities.load_structure_from_file(fullfile(pwd, list_folders_cells(i).name, sprintf('%s_%s.mat', name_cell, name_stack)));
+        segmentations_temp_2D = organoids2.utilities.load_structure_from_file(fullfile(pwd, list_folders_cells(i).name, sprintf('%s_%s.mat', name_cell, name_stack)));
         
         % format the cells data into a structure:
-        cells_temp_2D = format_cells_coordinates(cells_temp_2D);
+        segmentations_temp_2D = format_cells_coordinates(segmentations_temp_2D);
         
         % save:
-        segmentations.(name_cell).cells_2D = cells_temp_2D;
+        segmentations.(name_cell) = segmentations_temp_2D;
         
     end
     
@@ -76,6 +76,7 @@ function cells_struct = format_cells_coordinates(cells_array)
     % create a structure to store the cells:
     [cells_struct(1:num_cells).slice] = deal(0);
     [cells_struct(1:num_cells).boundary] = deal([]);
+    [cells_struct(1:num_cells).mask] = deal([]);
     [cells_struct(1:num_cells).object_num] = deal(0);
     
     % for each cell:
@@ -84,6 +85,7 @@ function cells_struct = format_cells_coordinates(cells_array)
         % get the data
         cells_struct(i).slice = cells_array(i,4);
         cells_struct(i).boundary = cells_array(i,2:4);
+        cells_struct(i).mask = cells_array(i,2:4);
         cells_struct(i).object_num = cells_array(i,1);
         
     end

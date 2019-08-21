@@ -14,6 +14,9 @@ function collect_all_segmentations
         % get the name of the stack:
         name_stack = list_image_stacks{i};
         
+        % display status:
+        fprintf('Working on %s\n', name_stack);
+        
         % collect all data into one structure:
         data = organoids2.collect_all_segmentations.collect_all_data_into_one_structure(name_stack);
         
@@ -30,9 +33,12 @@ function collect_all_segmentations
         data = organoids2.collect_all_segmentations.format_data(data);
         
         % re-arrange the segmentations into a structure reflecting their
-        % heirarchy (ie buds and cysts belong to an organoid, cells belong
-%         % to a bud or a cyst).
-%         data = organoids2.collect_all_segmentations.rearrange_data_into_hierarchy(data, organoid_type);
+        % heirarchy (ie buds    and cysts belong to an organoid, cells belong
+        % to a bud or a cyst).
+        data = organoids2.collect_all_segmentations.rearrange_data_into_hierarchy(data, organoid_type);
+        
+        % convert to um:
+        data = organoids2.collect_all_segmentations.get_coords_in_um(data);
         
         % save the segmentations:
         save(sprintf('all_segmentations_%s.mat', name_stack), 'data');
