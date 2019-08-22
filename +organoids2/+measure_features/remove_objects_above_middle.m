@@ -28,11 +28,15 @@ function objects = remove_objects_above_middle(objects, slice_middle)
             else
 
                 % get indices of coordinates above the middle:
-                indices_coords_remove = find(objects(i).boundary(:,3) > slice_middle);
+                indices_coords_remove_boundary = find(objects(i).boundary(:,3) > slice_middle);
+                indices_coords_remove_mask = find(objects(i).mask(:,3) > slice_middle);
 
                 % update the coordinates to exclude any above the middle:
-                objects(i).boundary(indices_coords_remove, :) = [];
-                objects(i).boundary_um(indices_coords_remove, :) = [];
+                objects(i).slices = slices_include;
+                objects(i).boundary(indices_coords_remove_boundary, :) = [];
+                objects(i).boundary_um(indices_coords_remove_boundary, :) = [];
+                objects(i).mask(indices_coords_remove_mask, :) = [];
+                objects(i).mask_um(indices_coords_remove_mask, :) = [];
 
             end
 
