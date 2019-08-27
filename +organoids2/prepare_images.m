@@ -21,12 +21,12 @@ function prepare_images
     % for each image:
     for i = 1:num_images
         
-        % display the number of the image you are working on:
-        fprintf('Working on slice %03d / %03d\n', i, num_images);
-        
         % get the image name:
         image_name = list_images(i).name;
         image_name_no_ext = organoids2.utilities.get_file_name_without_extension(image_name);
+        
+        % display the number of the image you are working on:
+        fprintf('Working on stack %s\n', image_name_no_ext);
         
         % read the image:
         [image, image_properties] = organoids2.utilities.load_lsm_stack(image_name);

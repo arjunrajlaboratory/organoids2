@@ -7,7 +7,7 @@
 % Data / LAUREN_05 / Quantius_Jobs / Job046_submission_2_redo_2.
 
 % Once this script has been run, the data is in the form it would be if
-% prepare_images, prepare_2D_segmentations_for_review (for all structures),
+% prepare_images, guess_2D_segmentations (for all structures), prepare_2D_segmentations_for_review (for all structures),
 % and prepare_3D_segmentations_for_review (for nuclei only) steps have
 % already been run.
 
@@ -22,7 +22,7 @@ organoid_type = job_settings.organoid_type;
 list_paths_raw_data = unique(extractfield(job_settings.stack_info.info_rename, 'path_old'));
 
 % for each raw data path:
-for i = 2:numel(list_paths_raw_data)
+for i = 1:numel(list_paths_raw_data)
    
     % get the path and the old folder name:
     temp = strfind(list_paths_raw_data{i}(1:end-10), '/');
@@ -126,13 +126,13 @@ for i = 2:numel(list_paths_raw_data)
         
         % if the segmentation file exists, copy it:
         if isfile(name_segmentation_file_nuclei)
-            copyfile(name_segmentation_file_nuclei, fullfile(path, folder_name_new, 'segmentations_nuclei', sprintf('nuclei_XY_2D_final_%s.mat', image_name_new)));
+            copyfile(name_segmentation_file_nuclei, fullfile(path, folder_name_new, 'segmentations_nuclei', sprintf('nuclei_XY_final_2D_%s.mat', image_name_new)));
         end
         if isfile(name_segmentation_file_lumens)
-            copyfile(name_segmentation_file_lumens, fullfile(path, folder_name_new, 'segmentations_lumens', sprintf('lumens_2D_final_%s.mat', image_name_new)));
+            copyfile(name_segmentation_file_lumens, fullfile(path, folder_name_new, 'segmentations_lumens', sprintf('lumens_final_2D_%s.mat', image_name_new)));
         end
         if isfile(name_segmentation_file_organoid)
-            copyfile(name_segmentation_file_organoid, fullfile(path, folder_name_new, 'segmentations_organoid', sprintf('organoid_2D_final_%s.mat', image_name_new)));
+            copyfile(name_segmentation_file_organoid, fullfile(path, folder_name_new, 'segmentations_organoid', sprintf('organoid_final_2D_%s.mat', image_name_new)));
         end
         
         % get the name of 3D segmentation file:
@@ -146,9 +146,45 @@ for i = 2:numel(list_paths_raw_data)
             
             % if the 3D nuclear segmentations exist:
             if isfield(segmentations_3D.seg_2D, 'nuclei')
+                
+                % get the 3D nuclear segmentations:
+                segmentations_3D_nuclei = segmentations_3D.seg_2D.nuclei;
+                
+                % remove the field containing boundary coords in um:
+                segmentations_3D_nuclei = rmfield(segmentations_3D_nuclei, 'coordinates_um');
+                
+                % rename the fields:
+                segmentations_3D_nuclei = cell2struct(struct2cell(segmentations_3D_nuclei), {'slices', 'boundary', 'object_num'});
+                
+                % add a field to store the mask coords:
+                [segmentations_3D_nuclei(1:end).mask] = deal([]);
+                
+                % for each segmentation:
+                for k = 1:numel(segmentations_3D_nuclei)
+                    
+                    % get the mask:
+                    mask_temp = zeros(image_info.height, image_info.width);
+                    for l = 1:size(segmentations_3D_nuclei(k).boundary, 1)
+                        mask_temp(segmentations_3D_nuclei(k).boundary(l,2), segmentations_3D_nuclei(k).boundary(l,1)) = 1; 
+                    end
+                        
+                    % fill in the mask:
+                    mask_temp = imfill(mask_temp, 'holes');
+                    
+                    % get the mask coords:
+                    [mask_coords_row, mask_coords_column] = find(mask_temp == 1);
+                    mask_coords = [mask_coords_column, mask_coords_row];
+                    
+                    % add the slice to the mask coords:
+                    mask_coords(:,3) = deal(segmentations_3D_nuclei(k).slices);
+                    
+                    % save the mask coords:
+                    segmentations_3D_nuclei(k).mask = mask_coords;
+                    
+                end
             
                 % save the 3D nuclear segmentations:
-                save(fullfile(path, folder_name_new, 'segmentations_nuclei', sprintf('nuclei_3D_final_%s.mat', image_name_new)), 'temp');
+                save(fullfile(path, folder_name_new, 'segmentations_nuclei', sprintf('nuclei_final_3D_%s.mat', image_name_new)), 'segmentations_3D_nuclei');
                             
             end
             

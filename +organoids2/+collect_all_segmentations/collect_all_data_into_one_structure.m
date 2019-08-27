@@ -21,16 +21,19 @@ function data = collect_all_data_into_one_structure(name_stack)
         % get the name of the segmentation:
         name_segmentation = list_folders_segmentations(i).name(15:end);
         
-        % load the segmentation file:
-        segmentations_temp_2D = organoids2.utilities.load_structure_from_file(fullfile(pwd, list_folders_segmentations(i).name, sprintf('%s_final_3D_%s.mat', name_segmentation, name_stack)));
+        % get the path to the segmentation file:
+        path_segmentation_file = fullfile(pwd, list_folders_segmentations(i).name, sprintf('%s_final_3D_%s.mat', name_segmentation, name_stack));
         
-        % remove the segmentation id field:
-        if ~ischar(segmentations_temp_2D)
-            segmentations_temp_2D = rmfield(segmentations_temp_2D, 'segmentation_id');
+        % if the segmentation file exists:
+        if isfile(path_segmentation_file)
+        
+            % load the segmentation file:
+            segmentations_temp_2D = organoids2.utilities.load_structure_from_file(path_segmentation_file);
+
+            % save segmentation:
+            segmentations.(name_segmentation) = segmentations_temp_2D;
+        
         end
-        
-        % save segmentation:
-        segmentations.(name_segmentation) = segmentations_temp_2D;
         
     end
         

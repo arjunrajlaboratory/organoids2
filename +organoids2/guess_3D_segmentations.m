@@ -1,8 +1,5 @@
 function guess_3D_segmentations
 
-    % get the name of the structure to segment:
-    name_structure = organoids2.utilities.ask_user_what_structure_to_segment;
-    
     % ask user how they want to segment the data:
     list_segmentation_methods = {'using orthogonal segmentations', 'using connected components'};
     [index, ~] = listdlg('ListString', list_segmentation_methods, 'SelectionMode', 'single');

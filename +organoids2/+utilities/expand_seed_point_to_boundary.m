@@ -42,18 +42,29 @@ function [boundary_coords, mask_coords] = expand_seed_point_to_boundary(image, s
         % get largest connected component:
         sizes = cellfun(@(x) numel(x), connected_components_new.PixelIdxList);
         [~, index] = max(sizes);
-        connected_component_organoid = connected_components_new.PixelIdxList{index};
+        if isempty(index)
+            
+            
+            boundary_coords = [1 1; 1 size(image_binary, 2); size(image_binary, 1) size(image_binary, 2); size(image_binary, 1) 1];
+            
+        else
+            
+            % get the connected component:
+            connected_component_organoid = connected_components_new.PixelIdxList{index};
+            
+            % create mask from the connected component:
+            mask_organoid = zeros(size(image_binary));
+            mask_organoid(connected_component_organoid) = 1;
 
-        % create mask from the connected component:
-        mask_organoid = zeros(size(image_binary));
-        mask_organoid(connected_component_organoid) = 1;
-
-        % get boundary:
-        boundary_coords = bwboundaries(mask_organoid);
-        boundary_coords = boundary_coords{1};
+            % get boundary:
+            boundary_coords = bwboundaries(mask_organoid);
+            boundary_coords = boundary_coords{1};
+        end
 
     end
 
+    
+    
     % switch x and y of the boundary coords:
     boundary_coords = fliplr(boundary_coords);
 

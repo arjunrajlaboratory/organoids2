@@ -41,7 +41,7 @@ function data = rearrange_data_into_hierarchy(data, organoid_type)
         % get the name of the organization:
         name_organization = organization_list(i).name;
         
-        % get the parent segmentations
+        % get the parent segmentations:
         segmentations_parent = data.segmentations.(organization_list(i).segmentation_parent);
         
         % create a structure to store the organized segmentations:
@@ -61,21 +61,26 @@ function data = rearrange_data_into_hierarchy(data, organoid_type)
                 % create a mask from the parent segmentation:
                 mask_parent = zeros(data.height, data.width, data.depth);
                 for j = 1:size(segmentations_parent(k).mask, 1)
-                    mask_parent(segmentations_parent(k).mask(j,1), segmentations_parent(k).mask(j,2), segmentations_parent(k).mask(j,3)) = 1;
+                    mask_parent(segmentations_parent(k).mask(j,2), segmentations_parent(k).mask(j,1), segmentations_parent(k).mask(j,3)) = 1;
                 end
 
                 % for each type of child segmentation:
                 for j = 1:numel(organization_list(i).segmentations_children)
+                    
+                    % if the child segmentations exist:
+                    if isfield(data.segmentations, organization_list(i).segmentations_children{j})
 
-                    % get the segmentations:
-                    segmentations_child = data.segmentations.(organization_list(i).segmentations_children{j});
+                        % get the child segmentations:
+                        segmentations_child = data.segmentations.(organization_list(i).segmentations_children{j});
 
-                    % cut segmentations to make sure they fit within the parent
-                    % segmentation:
-                    segmentations_child = get_child_segmentations_within_parent(segmentations_child, mask_parent);
+                        % cut segmentations to make sure they fit within the parent
+                        % segmentation:
+                        segmentations_child = get_child_segmentations_within_parent(segmentations_child, mask_parent);
 
-                    % save:
-                    data_organized(k).(organization_list(i).segmentations_children{j}) = segmentations_child;
+                        % save:
+                        data_organized(k).(organization_list(i).segmentations_children{j}) = segmentations_child;
+                    
+                    end
 
                 end
                 
@@ -118,7 +123,7 @@ function segmentations_child_new = get_child_segmentations_within_parent(segment
             % create mask from the segmentations (pixels of parent and child overlap will be 2):
             mask_overlap = mask_parent;
             for j = 1:size(segmentations_child(i).mask)
-                mask_overlap(segmentations_child(i).mask(j,1), segmentations_child(i).mask(j,2), segmentations_child(i).mask(j,3)) = mask_overlap(segmentations_child(i).mask(j,1), segmentations_child(i).mask(j,2), segmentations_child(i).mask(j,3)) + 1;
+                mask_overlap(segmentations_child(i).mask(j,2), segmentations_child(i).mask(j,1), segmentations_child(i).mask(j,3)) = mask_overlap(segmentations_child(i).mask(j,2), segmentations_child(i).mask(j,1), segmentations_child(i).mask(j,3)) + 1;
             end
             mask_overlap = mask_overlap == 2;
 

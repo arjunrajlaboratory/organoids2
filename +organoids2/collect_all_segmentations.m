@@ -8,8 +8,11 @@ function collect_all_segmentations
     % get the organoid type:
     organoid_type = organoids2.utilities.load_structure_from_file('organoid_type.mat');
     
+    % get the number of image stacks:
+    num_stacks = numel(list_image_stacks);
+    
     % for each image stack:
-    for i = 1:numel(list_image_stacks)
+    for i = 1:num_stacks
         
         % get the name of the stack:
         name_stack = list_image_stacks{i};

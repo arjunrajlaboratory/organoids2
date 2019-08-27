@@ -21,6 +21,11 @@ function guess_3D_segmentations_using_connected_components
         % assign 3D object number:
         segmentations = assign_3D_object_number(segmentations, image_height, image_width, image_depth);
         
+        % remove the segmentation id field:
+        if ~ischar(segmentations)
+            segmentations = rmfield(segmentations, 'segmentation_id');
+        end
+        
         % save segmentations:
         save(strrep(list_files(i).name, 'final_2D', 'guess_3D'), 'segmentations');
         

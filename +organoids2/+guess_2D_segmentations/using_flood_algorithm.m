@@ -5,9 +5,9 @@ function using_flood_algorithm
     
     % set the seed location:
     switch structure_to_segment
-        case 'lumens_final'
+        case 'lumens_guess'
             seed_location = 'inside';
-        case 'organoid_final'
+        case 'organoid_guess'
             seed_location = 'outside';
         otherwise
             error('No seed location set for segmenting %s', structure_to_segment);
@@ -29,11 +29,11 @@ function using_flood_algorithm
     % for each image:
     for i = 1:num_images
         
-        % display status:
-        fprintf('Predicting %s segmentations for stack %03d / %03d\n', structure_to_segment, i, num_images);
-        
         % get the image name:
         image_name = list_images(i).name(1:6);
+        
+        % display status:
+        fprintf('Working on %s\n', image_name);
         
         % load the image:
         image = readmm(fullfile(pwd, '..', list_images(i).name));
@@ -46,7 +46,7 @@ function using_flood_algorithm
         segmentations = organoids2.utilities.remove_segmentations_touching_corners(segmentations, size(image, 2), size(image, 1));
         
         % save the segmentations:
-        save(sprintf('%s_guess_2D_%s.mat', structure_to_segment, image_name), 'segmentations');
+        save(sprintf('%s_2D_%s.mat', structure_to_segment, image_name), 'segmentations');
         
     end
 

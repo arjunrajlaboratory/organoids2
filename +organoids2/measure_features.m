@@ -38,15 +38,11 @@ function measure_features
             % get the name of the data set:
             name_data_set = list_data_sets{k};
             
-            disp(name_data_set);
-            
             % if there are any segmentations:
             if ~ischar(data.segmentations.(name_data_set))
                 
                 % for each set of objects (organoid, bud, cyst):
                 for l = 1:numel(data.segmentations.(name_data_set))
-                    
-                    disp(l);
 
                     % get the segmentations:
                     segmentations = data.segmentations.(name_data_set)(l);
@@ -113,8 +109,6 @@ function features = measure_features_for_a_data_set(segmentations_all, name_data
         
         % get the name of the segmentation:
         name_segmentation = list_segmentation_types{i};
-        
-        disp(name_segmentation);
         
         % get the segmentations:
         segmentations_temp = segmentations_all.(name_segmentation);
@@ -214,7 +208,7 @@ function features = measure_features_for_a_data_set(segmentations_all, name_data
     %%% segmentation types:
 
     % wall thickness:
-    wall_thickness = organoids2.measure_features.measure_wall_thickness('nearest_lumen_point', segmentations_all.lumens, segmentations_all z.organoid);
+    wall_thickness = organoids2.measure_features.measure_wall_thickness('nearest_lumen_point', segmentations_all.lumens, segmentations_all.organoid);
     features.feature_wall_thickness_mean = mean(wall_thickness);
     features.feature_wall_thickness_st_dev = std(wall_thickness);
     
@@ -238,19 +232,19 @@ function features = measure_features_for_a_data_set(segmentations_all, name_data
     
     % density:
     if nnz(contains(list_segmentation_types, 'buds'))
-        density_buds = organoids2.measure_features.measure_ratio(features.feature_volume_total_buds, features.feature_volume_organoid_mean);
+        density_buds = organoids2.measure_features.measure_ratio(features.feature_number_buds, features.feature_volume_organoid_mean);
         features.feature_density_buds = mean(density_buds);
     end
     if nnz(contains(list_segmentation_types, 'cyst'))
-        density_cyst = organoids2.measure_features.measure_ratio(features.feature_volume_total_cyst, features.feature_volume_organoid_mean);
+        density_cyst = organoids2.measure_features.measure_ratio(features.feature_number_cyst, features.feature_volume_organoid_mean);
         features.feature_density_cyst = mean(density_cyst);
     end
     if nnz(contains(list_segmentation_types, 'lumens'))
-        density_lumens = organoids2.measure_features.measure_ratio(features.feature_volume_total_lumens, features.feature_volume_organoid_mean);
+        density_lumens = organoids2.measure_features.measure_ratio(features.feature_number_lumens, features.feature_volume_organoid_mean);
         features.feature_density_lumens = mean(density_lumens);
     end
     if nnz(contains(list_segmentation_types, 'nuclei'))
-        density_nuclei = organoids2.measure_features.measure_ratio(features.feature_volume_total_nuclei, features.feature_volume_organoid_mean);
+        density_nuclei = organoids2.measure_features.measure_ratio(features.feature_number_nuclei, features.feature_volume_organoid_mean);
         features.feature_density_nuclei = mean(density_nuclei);
     end
     
