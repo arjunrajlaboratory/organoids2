@@ -2,6 +2,9 @@ function prepare_images
 
     % input the organoid type:
     organoid_type = questdlg('What type of organoids are these?', 'Organoid Selection', 'MDCK', 'Intestine', 'MDCK');
+    
+    % ask user if they want to crop the iamges in z:
+    crop_decision = questdlg('Do you want to crop the images in z (remove slices)?', '', 'no', 'yes', 'no');
 
     % save the organoid type:
     save('organoid_type.mat', 'organoid_type');
@@ -34,8 +37,21 @@ function prepare_images
         % get number of channels:
         num_channels = size(image, 4);
         
-        % crop image in z:
-        [image_cropped, slice_start, slice_end] = organoids2.prepare_images.gui_to_crop_image(image, channel_names, 'xy');
+        % if the user wants to crop the images:
+        switch crop_decision
+            
+            case 'yes'
+            
+                % crop image in z:
+                [image_cropped, slice_start, slice_end] = organoids2.prepare_images.gui_to_crop_image(image, channel_names, 'xy');
+                
+            case 'no'
+               
+                image_cropped = image;
+                slice_start = 1;
+                slice_end = size(image_cropped, 3);
+            
+        end
         
         % save individual channels (as grayscale):
         for j = 1:num_channels
