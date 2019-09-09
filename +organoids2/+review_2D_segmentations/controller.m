@@ -585,8 +585,12 @@ classdef controller < handle
                             mask(mask_coords(j,2), mask_coords(j,1)) = 1;
                         end
                         
-                        % grow the mask:
-                        mask = imdilate(mask, strel('disk', growth_diameter));
+                        % grow/erode the mask:
+                        if growth_diameter > 0
+                            mask = imdilate(mask, strel('disk', growth_diameter));
+                        elseif growth_diameter < 0
+                            mask = imerode(mask, strel('disk', abs(growth_diameter)));
+                        end
                         
                         % get coords from mask:
                         boundary = bwboundaries(mask);
