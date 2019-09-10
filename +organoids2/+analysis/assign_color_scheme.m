@@ -15,11 +15,11 @@ function [features, color_key] = assign_color_scheme(features, scheme)
             list_values = num2cell(list_values);
             
             % get color key:
-            color_key = create_color_key(list_values);
+            color_key = create_color_key(list_values, 'gradient');
             
-            % set 1 lumen to black:
-            [~, index] = quantiuspipeline.utilities.get_structure_results_matching_number(color_key, 'value', 1);
-            color_key(index).color = [0.0 0.0 0.0];
+            % set 1 lumen to white:
+            [~, index] = organoids2.utilities.get_structure_results_matching_number(color_key, 'value', 1);
+            color_key(index).color = [1.0 1.0 1.0];
             
         case 'color by condition'
             
@@ -48,7 +48,7 @@ function [features, color_key] = assign_color_scheme(features, scheme)
             
             % get order to use for values:
             for i = 1:numel(list_values)
-                temp = quantiuspipeline.utilities.get_structure_results_matching_string(features, 'drug', list_values{i});
+                temp = organoids2.utilities.get_structure_results_matching_string(features, 'drug', list_values{i});
                 order(i) = temp(1).number_condition;
             end
             [~, order] = sort(order);
@@ -104,7 +104,7 @@ function [features, color_key] = assign_color_scheme(features, scheme)
                 temp_value = features(i).feature_number_lumens;
                 
                 % get the matching color key entry:
-                temp_color_key = quantiuspipeline.utilities.get_structure_results_matching_number(color_key, 'value', temp_value);
+                temp_color_key = organoids2.utilities.get_structure_results_matching_number(color_key, 'value', temp_value);
                 
             case 'color by condition'
 
@@ -112,7 +112,7 @@ function [features, color_key] = assign_color_scheme(features, scheme)
                 temp_value = features(i).number_condition;
                 
                 % get the matching color key entry:
-                temp_color_key = quantiuspipeline.utilities.get_structure_results_matching_number(color_key, 'value', temp_value);
+                temp_color_key = organoids2.utilities.get_structure_results_matching_number(color_key, 'value', temp_value);
                 
             case 'color by drug'
                 
@@ -120,7 +120,7 @@ function [features, color_key] = assign_color_scheme(features, scheme)
                 temp_value = features(i).drug;
                 
                 % get the matching color key entry:
-                temp_color_key = quantiuspipeline.utilities.get_structure_results_matching_string(color_key, 'value', temp_value);
+                temp_color_key = organoids2.utilities.get_structure_results_matching_string(color_key, 'value', temp_value);
                 
             case 'color by perfection'
                 
@@ -134,13 +134,13 @@ function [features, color_key] = assign_color_scheme(features, scheme)
                 if contains(temp_stack, list_perfect_organoids)
                     
                     % get the matching part of the key:
-                    temp_color_key = quantiuspipeline.utilities.get_structure_results_matching_string(color_key, 'value', 'perfect');
+                    temp_color_key = organoids2.utilities.get_structure_results_matching_string(color_key, 'value', 'perfect');
   
                 % otherwise:
                 else
                     
                     % get the matching part of the key:
-                    temp_color_key = quantiuspipeline.utilities.get_structure_results_matching_string(color_key, 'value', 'imperfect');
+                    temp_color_key = organoids2.utilities.get_structure_results_matching_string(color_key, 'value', 'imperfect');
                     
                 end
                 
@@ -150,7 +150,7 @@ function [features, color_key] = assign_color_scheme(features, scheme)
                 temp_value = features(i).job_number;
                 
                 % get the matching part of the key:
-                temp_color_key = quantiuspipeline.utilities.get_structure_results_matching_number(color_key, 'value', temp_value);
+                temp_color_key = organoids2.utilities.get_structure_results_matching_number(color_key, 'value', temp_value);
                 
         end
         
@@ -161,13 +161,19 @@ function [features, color_key] = assign_color_scheme(features, scheme)
 
 end
 
-function color_key = create_color_key(list_values)
+function color_key = create_color_key(list_values, method)
     
     % get number of values:
     num_values = numel(list_values);
     
     % get color for each value:
-    colors = distinguishable_colors(num_values, {'w', 'k'});
+    switch method
+        case 'distinguishable'
+            colors = organoids2.utilities.distinguishable_colors(num_values, {'w', 'k'});
+        case 'gradient'
+            colors = hsv(num_values - 1);
+            colors = [1 1 1; colors];
+    end
     
     % create structure to store color key:
     [color_key(1:num_values).value] = deal('');
