@@ -11,8 +11,11 @@ function [features, color_key] = assign_color_scheme(features, scheme)
             % get the list of the number of lumens:
             list_values = unique(extractfield(features, 'feature_number_lumens'));
             
+            % get the max number of lumens:
+            max_list_values = max(list_values);
+            
             % convert to cell:
-            list_values = num2cell(list_values);
+            list_values = num2cell(1:max_list_values);
             
             % get color key:
             color_key = create_color_key(list_values, 'gradient');
@@ -57,10 +60,10 @@ function [features, color_key] = assign_color_scheme(features, scheme)
             list_values = list_values(order);
             
             % get color key:
-            color_key = create_color_key(list_values);
+            color_key = create_color_key(list_values, 'distinguishable');
             
-            % set normal to black:
-            color_key(1).color = [0.0 0.0 0.0];
+            % set normal to white:
+            color_key(1).color = [1 1 1];
             
             % set DMSO to gray:
             color_key(2).color = [0.5 0.5 0.5];
