@@ -186,7 +186,7 @@ classdef controller < handle
                 num_segmentations_slice = numel(segmentations_slice);
                 
                 % get a color for each segmentation:
-                colors = organoids2.utilities.distinguishable_colors(num_segmentations_slice, 'k');
+                colors = organoids2.utilities.distinguishable_colors(num_segmentations_slice, {'w', 'k'});
                 
                 % for each segmentation on the slice:
                 for i = 1:num_segmentations_slice
