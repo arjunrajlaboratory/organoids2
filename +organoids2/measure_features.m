@@ -235,10 +235,6 @@ function features = measure_features_for_a_data_set(segmentations_all, name_data
         density_buds = organoids2.measure_features.measure_ratio(features.feature_number_buds, features.feature_volume_organoid_mean);
         features.feature_density_buds = mean(density_buds);
     end
-    if nnz(contains(list_segmentation_types, 'cyst'))
-        density_cyst = organoids2.measure_features.measure_ratio(features.feature_number_cyst, features.feature_volume_organoid_mean);
-        features.feature_density_cyst = mean(density_cyst);
-    end
     if nnz(contains(list_segmentation_types, 'lumens'))
         density_lumens = organoids2.measure_features.measure_ratio(features.feature_number_lumens, features.feature_volume_organoid_mean);
         features.feature_density_lumens = mean(density_lumens);

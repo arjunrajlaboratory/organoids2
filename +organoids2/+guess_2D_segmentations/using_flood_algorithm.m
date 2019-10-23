@@ -1,13 +1,14 @@
 function using_flood_algorithm
 
     % get the name of the structure to segment:
-    structure_to_segment = organoids2.utilities.ask_user_what_structure_to_segment;
+    [~, structure_to_segment, ~] = fileparts(pwd);
+    structure_to_segment = structure_to_segment(15:end);
     
     % set the seed location:
     switch structure_to_segment
-        case 'lumens_guess'
+        case 'lumens'
             seed_location = 'inside';
-        case 'organoid_guess'
+        case 'organoid'
             seed_location = 'outside';
         otherwise
             error('No seed location set for segmenting %s', structure_to_segment);
@@ -46,7 +47,7 @@ function using_flood_algorithm
         segmentations = organoids2.utilities.remove_segmentations_touching_corners(segmentations, size(image, 2), size(image, 1));
         
         % save the segmentations:
-        save(sprintf('%s_2D_%s.mat', structure_to_segment, image_name), 'segmentations');
+        save(sprintf('%s_guess_2D_%s.mat', structure_to_segment, image_name), 'segmentations');
         
     end
 

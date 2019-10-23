@@ -1,13 +1,14 @@
 function review_2D_segmentations
 
     % get the name of the structure to segment:
-    settings.name_structure = organoids2.utilities.ask_user_what_structure_to_segment;
+    [~, structure_to_segment, ~] = fileparts(pwd);
+    structure_to_segment = structure_to_segment(15:end);
     
     % set the seed location:
-    switch settings.name_structure
-        case {'lumens_final', 'buds_final'}
+    switch structure_to_segment
+        case {'lumens', 'buds', 'nuclei'}
             settings.seed_location = 'inside';
-        case 'organoid_final'
+        case 'organoid'
             settings.seed_location = 'outside';
         otherwise
             error('No seed location set for segmenting %s', settings.name_structure);

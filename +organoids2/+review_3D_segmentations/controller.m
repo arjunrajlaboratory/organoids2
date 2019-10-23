@@ -3,7 +3,7 @@ classdef controller < handle
     properties
         
         % segmentation settings:
-        structure_to_segment;
+        settings;
         
         % GUI data:
         path_data;
@@ -16,14 +16,18 @@ classdef controller < handle
         image_height;
         current_slice;
         image_display;
+        image_calculate;
         contrast_max;
         axis_limits_x;
         axis_limits_y;
         
         % GUI components:       
         handle_figure;
+        
         handle_axes;
+        
         handle_contrast_slider;
+        
         handle_navigation_stack_next;
         handle_navigation_stack_current;
         handle_navigation_stack_total;
@@ -32,6 +36,18 @@ classdef controller < handle
         handle_navigation_slice_current;
         handle_navigation_slice_total;
         handle_navigation_slice_previous;
+        
+        handle_tools_delete;
+        
+        handle_tools_automatic;
+        handle_tools_flood;
+        handle_tools_flood_number;
+        handle_tools_draw;
+        
+        handle_tools_split;
+        handle_tools_redraw;
+        handle_tools_grow;
+        handle_tools_grow_number;
         
         handle_segmentations;
         
@@ -43,10 +59,10 @@ classdef controller < handle
     methods
         
         % constructor:
-        function c = controller(v, structure_to_segment)
+        function c = controller(v, settings)
             
-            % get structure to segment:
-            c.structure_to_segment = structure_to_segment;
+            % get settings:
+            c.settings = settings;
             
             % link to view:
             c.handle_figure =                               v.handle_figure;
@@ -60,10 +76,13 @@ classdef controller < handle
             c.handle_navigation_slice_current =             v.handle_navigation_slice_current;
             c.handle_navigation_slice_total =               v.handle_navigation_slice_total;
             c.handle_navigation_slice_next =                v.handle_navigation_slice_next;
-            
+            c.handle_tools_draw =                           v.handle_tools_draw;
+
             % get GUI data:
             c.path_data = fullfile(pwd, '..');
-            c.list_segmentation_files = dir(sprintf('%s_3D_final*.mat', structure_to_segment));
+            list_stacks = dir(fullfile(pwd, '..', 'pos*.lsm'));
+            list_stacks = extractfield(list_stacks, 'name');
+            c.list_segmentation_files = cellfun(@(x) sprintf('%s_3D_%s.mat', settings.name_structure, x(1:6)), list_stacks, 'UniformOutput', false);
             c.num_stacks = numel(c.list_segmentation_files);
             c.current_stack = 1;
             c.contrast_max = 1;
@@ -80,19 +99,16 @@ classdef controller < handle
         function c = load_data(c)
             
             % load the segmentations:
-            c.m = organoids2.review_3D_segmentations.model(c.list_segmentation_files(c.current_stack).name);    
+            c.m = organoids2.review_3D_segmentations.model(c.list_segmentation_files{c.current_stack});
             
             % have the segmentations save when the window closes:
             c.handle_figure.CloseRequestFcn = @c.callback_close_window;
             
             % get the image name:
-            image_name = c.list_segmentation_files(c.current_stack).name(end-9:end-4);
+            image_name = c.list_segmentation_files{c.current_stack}(end-9:end-4);
             
-            % load the image to display:
-            c.image_display = c.load_stack(fullfile(c.path_data, sprintf('%s_rgb.mat', image_name)));
-            
-            % get the orthogonal image:
-            c.image_display = organoids2.utilities.reslice_stack(c.image_display, 6);
+            % load the image for display:
+            c.image_display = c.load_stack(fullfile(c.path_data, sprintf('%s_%s', image_name, c.settings.string_image_display)));
             
             % update number of image size:
             c.num_slices = size(c.image_display, 4);
@@ -100,7 +116,7 @@ classdef controller < handle
             c.image_height = size(c.image_display, 1);
             
             % update the current slice:
-            c.current_slice = 200;
+            c.current_slice = 1;
            
             % update the zoom:
             c.axis_limits_x = [0.5 c.image_width + 0.5];
@@ -136,40 +152,29 @@ classdef controller < handle
             
             % if there are any segmentations:
             if ~ischar(c.m.segmentations)
+            
+                % get segmentations on the slice:
+                segmentations_slice = organoids2.utilities.get_structure_results_matching_number(c.m.segmentations, 'slice', c.current_slice);
+                
+                % get number of segmentations on the slice:
+                num_segmentations_slice = numel(segmentations_slice);
                 
                 % get a color for each segmentation:
-                colors = organoids2.utilities.distinguishable_colors(numel(extractfield(c.m.segmentations, 'object_num')), 'k');
+                colors = organoids2.utilities.distinguishable_colors(num_segmentations_slice, {'w', 'k'});
                 
-                % for each segmentation:
-                for i = 1:numel(c.m.segmentations)
-                    
-                    % if the segmentation is on the slice:
-                    if ismember(c.current_slice, c.m.segmentations(i).boundary(:,1))
-                    
-                        % get the coordinates:
-                        coordinates_XY = c.m.segmentations(i).boundary;
-                        
-                        % convert the coordinates to XZ:
-                        coordinates_XZ = [coordinates_XY(:,2), coordinates_XY(:,3), coordinates_XY(:,2)];
-                        
-                        % scale the coordinates:
-                        % coordinates_XZ(:,2) = coordinates_XZ(:,2) * 6;
-                        
-                        % get the color:
-                        color = colors(c.m.segmentations(i).object_num, :);
+                % for each segmentation on the slice:
+                for i = 1:num_segmentations_slice
 
-                        % draw:
-                        c.handle_segmentations{i} = drawfreehand(c.handle_axes, ...
-                            'Position', coordinates_XZ(:,1:2), ...
-                            'Color', color, ...
-                            'FaceAlpha', 0, ...
-                            'LineWidth', 2.0);
+                    % draw:
+                    c.handle_segmentations{i} = drawfreehand(c.handle_axes, ...
+                        'Position', segmentations_slice(i).boundary(:,1:2), ...
+                        'Color', colors(i,:), ...
+                        'FaceAlpha', 0, ...
+                        'LineWidth', 2.0);
 
-                        % add listener for the segmentation:
-                        % addlistener(c.handle_segmentations{i}, 'ROIMoved', @(src, eventdata)c.callback_edit(src, eventdata, segmentations(i).segmentation_id));
+                    % add listener for the segmentation:
+                    addlistener(c.handle_segmentations{i}, 'ROIMoved', @(src, eventdata)c.callback_edit(src, eventdata, segmentations_slice(i).segmentation_id));
                     
-                    end
-                        
                 end
             
             end
@@ -334,6 +339,33 @@ classdef controller < handle
             
         end
         
+        % callback to create a segmentation by drawing:
+        function c = callback_draw(c, ~, ~)
+            
+            % let the user draw on the image:
+            coords_drawn = drawfreehand(c.handle_axes, 'Closed', true, 'Color', 'white');
+            
+            % if the user actually clicked:
+            if isgraphics(coords_drawn)
+
+                % get coordinates:
+                coords_drawn = round(coords_drawn.Position);
+                coords_drawn_x = coords_drawn(:,1);
+                coords_drawn_y = coords_drawn(:,2);
+
+                % format the coordinates:
+                [coords_boundary, coords_mask] = organoids2.utilities.get_boundary_and_mask_from_coords(coords_drawn_x, coords_drawn_y, c.image_height, c.image_width, c.current_slice);
+
+                % add object to model:
+                c.m = c.m.add_segmentation(coords_boundary, coords_mask);
+
+                % update the display:
+                c = update_display(c);
+            
+            end
+            
+        end     
+        
         % callback for real-time editing of a segmentation:
         function c = callback_edit(c, ~, ~, segmentation_id)
             
@@ -349,7 +381,7 @@ classdef controller < handle
             coords_y = coords(:,2);
             
             % format the coordinates:
-            [segmentation_coords_boundary, segmentation_coords_mask] = organoids.utilities.get_boundary_and_mask_from_coords(coords_x, coords_y, c.image_height, c.image_width, c.current_slice);
+            [segmentation_coords_boundary, segmentation_coords_mask] = organoids2.utilities.get_boundary_and_mask_from_coords(coords_x, coords_y, c.image_height, c.image_width, c.current_slice);
             
             % update the segmentation:
             c.m.edit_segmentation(segmentation_id, segmentation_coords_boundary, segmentation_coords_mask);
@@ -392,9 +424,13 @@ classdef controller < handle
                 case '.mat'
                     
                     % load the image:
-                    stack = organoids2.utilities.load_structure_from_file(path_file);
+                    stack = load(path_file);
+                    stack = stack.image_rgb;
                 
             end
+            
+            % get the orthogonal version of the image:
+            stack = 
 
         end
         

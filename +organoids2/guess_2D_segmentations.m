@@ -1,7 +1,9 @@
 function guess_2D_segmentations
     
-    % ask user how they want to segment the data:
+    % make a list of segmentation methods
     list_segmentation_methods = {'using nucleaizer', 'using flood algorithm', 'using GUI to draw on max merge'};
+    
+    % ask user how they want to segment the data:
     [index, ~] = listdlg('ListString', list_segmentation_methods, 'SelectionMode', 'single', 'PromptString', 'What algorithm do you want to use?', 'ListSize', [400 300]);
     segmentation_method = list_segmentation_methods{index};
     

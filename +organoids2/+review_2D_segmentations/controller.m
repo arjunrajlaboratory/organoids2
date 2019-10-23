@@ -91,7 +91,7 @@ classdef controller < handle
             list_stacks = dir(fullfile(pwd, '..', 'pos*.lsm'));
             list_stacks = extractfield(list_stacks, 'name');
             c.list_segmentation_files = cellfun(@(x) sprintf('%s_2D_%s.mat', settings.name_structure, x(1:6)), list_stacks, 'UniformOutput', false);
-            c.num_stacks = numel(c.list_segmentation_files);
+            c.num_stacks = numel(list_stacks);
             c.current_stack = 1;
             c.contrast_max = 1;
             
