@@ -8,7 +8,7 @@ classdef controller < handle
         % GUI data:
         path_data;
         list_segmentation_files;
-        num_job;
+        list_channels;
         num_stacks;
         current_stack;
         num_slices;
@@ -88,10 +88,9 @@ classdef controller < handle
 
             % get GUI data:
             c.path_data = fullfile(pwd, '..');
-            list_stacks = dir(fullfile(pwd, '..', 'pos*.lsm'));
-            list_stacks = extractfield(list_stacks, 'name');
-            c.list_segmentation_files = cellfun(@(x) sprintf('%s_2D_%s.mat', settings.name_structure, x(1:6)), list_stacks, 'UniformOutput', false);
-            c.num_stacks = numel(list_stacks);
+            c.list_segmentation_files = settings.list_segmentation_files;
+            c.list_channels = settings.list_channels;
+            c.num_stacks = numel(c.list_segmentation_files);
             c.current_stack = 1;
             c.contrast_max = 1;
             
@@ -120,15 +119,15 @@ classdef controller < handle
             image_name = c.list_segmentation_files{c.current_stack}(end-9:end-4);
             
             % load the image for calculations:
-            c.image_calculate = c.load_stack(fullfile(c.path_data, sprintf('%s_%s', image_name, c.settings.string_image_calculate)));
+            % c.image_calculate = c.load_stack(fullfile(c.path_data, sprintf('%s_%s', image_name, c.settings.string_image_calculate)));
             
             % load the image for display:
-            c.image_display = c.load_stack(fullfile(c.path_data, sprintf('%s_%s', image_name, c.settings.string_image_display)));
+            c.image_display = c.load_stack(image_name, c.list_channels);
+            % c.image_display = c.load_stack(fullfile(c.path_data, sprintf('%s_%s', image_name, c.settings.string_image_display)));
             
             % depending on the structure to segment:
-            switch c.settings.name_structure
-                case 'buds_guess'
-                    c.image_display = max(c.image_display, [], 4);
+            if contains(c.list_segmentation_files{c.current_stack}, 'buds_guess')
+                c.image_display = max(c.image_display, [], 4);
             end
             
             % update number of image size:
@@ -709,28 +708,24 @@ classdef controller < handle
     methods (Static)
         
         % function to load an image stack:
-        function stack = load_stack(path_file)
+        function stack = load_stack(image_name, list_channels)
             
-            % get the extension of the file:
-            [~, ~, extension] = fileparts(path_file);
-            
-            % depending on the extension of the file:
-            switch extension
+            % for each channel:
+            for i = 1:numel(list_channels)
+               
+                % load the channel:
+                temp_channel = readmm(fullfile(pwd, '..', sprintf('%s_%s.tif', image_name, list_channels{i})));
+                temp_channel = temp_channel.imagedata;
                 
-                case '.tif'
-                
-                    % load the image:
-                    stack = readmm(path_file);
-                    stack = stack.imagedata;
+                if i == 1
                     
-                    % flip the order of the channel and slice:
-                    stack = permute(stack, [1 2 4 3]);
-                
-                case '.mat'
+                    stack = temp_channel;
                     
-                    % load the image:
-                    stack = load(path_file);
-                    stack = stack.image_rgb;
+                else
+                    
+                    stack(:,:,:,i) = temp_channel;
+                    
+                end
                 
             end
 
