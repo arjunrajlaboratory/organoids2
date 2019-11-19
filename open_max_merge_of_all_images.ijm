@@ -10,14 +10,19 @@ for(i = 0; i < list_images.length; i++){
 	// get the path to the image:
 	path_image = path_folder + list_images[i];
 
-	// open the stack:
-	open(path_image);
+	// if the file is a .lsm file:
+	if (indexOf(path_image, ".lsm") >= 0){
 
-	// make a max merge:
-	run("Z Project...", "projection=[Max Intensity]");
+		// open the stack:
+		open(path_image);
+	
+		// make a max merge:
+		run("Z Project...", "projection=[Max Intensity]");
+	
+		// close the stack:
+		close(list_images[i]);
 
-	// close the stack:
-	close(list_images[i]);
+	} 
 	
 }
 
