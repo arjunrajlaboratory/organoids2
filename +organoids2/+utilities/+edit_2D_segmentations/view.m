@@ -488,27 +488,28 @@ classdef view < handle
             v.handle_figure.KeyPressFcn = @v.callback_key_press;
 
             % hook up to the controller to the view:
-            c = organoids2.utilities.edit_2D_segmentations.controller(v, gui_data);
+            v.c = organoids2.utilities.edit_2D_segmentations.controller(v, gui_data);
             
             % hook up the view to the controller: 
-            v.handle_contrast_slider.Callback =                                 {@c.callback_contrast};
-            v.handle_navigation_stack_previous.Callback =                       {@c.callback_stack_previous};
-            v.handle_navigation_stack_current.Callback =                        {@c.callback_stack_current};
-            v.handle_navigation_stack_next.Callback =                           {@c.callback_stack_next};
-            v.handle_navigation_slice_previous.Callback =                       {@c.callback_slice_previous};
-            v.handle_navigation_slice_current.Callback =                        {@c.callback_slice_current};
-            v.handle_navigation_slice_next.Callback =                           {@c.callback_slice_next};
-            v.handle_tools_delete.Callback =                                    {@c.callback_delete};
-            v.handle_tools_automatic.Callback =                                 {@c.callback_automatic};
-            v.handle_tools_flood.Callback =                                     {@c.callback_flood};
-            v.handle_tools_draw.Callback =                                      {@c.callback_draw};
-            v.handle_tools_redraw.Callback =                                    {@c.callback_redraw};
-            v.handle_tools_split.Callback =                                     {@c.callback_split};
-            v.handle_tools_grow.Callback =                                      {@c.callback_grow};
-            v.handle_all_channels.handle_button_group.SelectionChangedFcn =     {@c.callback_channels_change_calculation};
+            vc = v.c; % annoying syntax required by matlab
+            v.handle_contrast_slider.Callback =                                 {@vc.callback_contrast};
+            v.handle_navigation_stack_previous.Callback =                       {@vc.callback_stack_previous};
+            v.handle_navigation_stack_current.Callback =                        {@vc.callback_stack_current};
+            v.handle_navigation_stack_next.Callback =                           {@vc.callback_stack_next};
+            v.handle_navigation_slice_previous.Callback =                       {@vc.callback_slice_previous};
+            v.handle_navigation_slice_current.Callback =                        {@vc.callback_slice_current};
+            v.handle_navigation_slice_next.Callback =                           {@vc.callback_slice_next};
+            v.handle_tools_delete.Callback =                                    {@vc.callback_delete};
+            v.handle_tools_automatic.Callback =                                 {@vc.callback_automatic};
+            v.handle_tools_flood.Callback =                                     {@vc.callback_flood};
+            v.handle_tools_draw.Callback =                                      {@vc.callback_draw};
+            v.handle_tools_redraw.Callback =                                    {@vc.callback_redraw};
+            v.handle_tools_split.Callback =                                     {@vc.callback_split};
+            v.handle_tools_grow.Callback =                                      {@vc.callback_grow};
+            v.handle_all_channels.handle_button_group.SelectionChangedFcn =     {@vc.callback_channels_change_calculation};
             for i = 1:gui_data.num_channels
-               v.handle_all_channels.(sprintf('pushbutton_%01d', i)).Callback =     {@c.callback_channels_change_visibility, i}; 
-               v.handle_all_channels.(sprintf('popupmenu_%01d', i)).Callback =      {@c.callback_channels_change_color, i};
+               v.handle_all_channels.(sprintf('pushbutton_%01d', i)).Callback =     {@vc.callback_channels_change_visibility, i}; 
+               v.handle_all_channels.(sprintf('popupmenu_%01d', i)).Callback =      {@vc.callback_channels_change_color, i};
             end
             
             % make all text larger:
