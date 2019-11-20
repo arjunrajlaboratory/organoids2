@@ -10,7 +10,7 @@ classdef view < handle
         shortcut_flood = 'f';
         shortcut_automatic = 'a';
         shortcut_delete = 'q';
-
+        
         % add GUI components:
         handle_figure;
         
@@ -39,6 +39,8 @@ classdef view < handle
         handle_tools_grow;
         handle_tools_grow_number;
         
+        handle_all_channels
+        
         handle_annotations;
         
         % add controller:
@@ -49,7 +51,13 @@ classdef view < handle
     methods
         
         % constructor:
-        function v = view(settings)
+        function v = view(gui_data)
+            
+            % get a list of channels:
+            gui_data.list_channels = unique(cellfun(@(x) x(8:end-4), extractfield(gui_data.list_images, 'name'), 'UniformOutput', false));
+
+            % get the number of channels:
+            gui_data.num_channels = numel(gui_data.list_channels);
            
             % set the margin to use between elements:
             margin =                            0.01;
@@ -57,15 +65,21 @@ classdef view < handle
             % set the widths:
             width_figure =                      0.9;
             width_half =                        (1 - 3 * margin) / 2;
+            width_quarter =                     (1 - 5 * margin) / 4;
             
             width_axes =                        width_half;
-            width_tools =                       width_half;
+            width_tools =                       width_quarter;
+            width_channels =                    width_quarter;
             width_navigation =                  width_half;
             width_contrast =                    width_half;
 
-            width_tools_element =               0.2;
-            width_tools_text =                  (1 - (4 * margin) - (2 * width_tools_element));
+            width_tools_element =               (1 - 4 * margin) / 3;
             width_tools_label =                 1 - (2 * margin);
+            
+            width_channels_group =              0.1; 
+            width_channels_radiobutton =        1;
+            width_channels_toggle =             0.4;             
+            width_channels_dropdown =           1 - 4 * margin - width_channels_group - width_channels_toggle;  
             
             width_navigation_element =          (1 - 4 * margin) / 3;
             width_navigation_text =             (1 - 10 * margin) / 9;
@@ -80,10 +94,15 @@ classdef view < handle
             height_navigation =                 0.3;
             height_contrast =                   0.1;
             height_tools =                      height_full - (2 * margin) - height_navigation - height_contrast; 
+            height_channels =                   height_full - (2 * margin) - height_navigation - height_contrast; 
             
             height_tools_element =              (1 - 11 * margin) / 10;
-            height_tools_text =                 (1 - 11 * margin) / 10;
             height_tools_label =                (1 - 11 * margin) / 10;
+            
+            height_channels_group =             1 - 2 * margin;
+            height_channels_radiobutton =       (1 - (1 + gui_data.num_channels) * margin) / gui_data.num_channels;
+            height_channels_toggle =            (1 - (1 + gui_data.num_channels) * margin) / gui_data.num_channels;
+            height_channels_dropdown =          (1 - (1 + gui_data.num_channels) * margin) / gui_data.num_channels;
             
             height_navigation_element =         (1 - 3 * margin) / 2;
             height_navigation_text =            (1 - 3 * margin) / 2;
@@ -97,6 +116,12 @@ classdef view < handle
             x_contrast =                        margin + width_axes + margin;
             x_navigation =                      margin + width_axes + margin;
             x_tools =                           margin + width_axes + margin;
+            x_channels =                        margin + width_axes + margin + width_tools + margin;
+            
+            x_channels_group =                  margin;
+            x_channels_radiobutton =            margin;
+            x_channels_toggle =                 margin + width_channels_group + margin;
+            x_channels_dropdown =               margin + width_channels_group + margin + width_channels_toggle + margin;
 
             x_contrast_slider =                 margin;
 
@@ -112,23 +137,16 @@ classdef view < handle
             x_navigation_slice_next =           margin + width_navigation_element + margin + width_navigation_text + margin + width_navigation_text + margin + width_navigation_text + margin;
             
             x_tools_grow_button =               margin;
-            x_tools_grow_text =                 margin + width_tools_element + margin;
-            x_tools_grow_number =               margin + width_tools_element + margin + width_tools_text + margin;
+            x_tools_grow_number =               margin + width_tools_element + margin;
             x_tools_split_button =              margin;
-            x_tools_split_text =                margin + width_tools_element + margin;
             x_tools_redraw_button =             margin;
-            x_tools_redraw_text =               margin + width_tools_element + margin;
             x_tools_label_edit =                margin;
             x_tools_draw_button =               margin;
-            x_tools_draw_text =                 margin + width_tools_element + margin;
             x_tools_flood_button =              margin;
-            x_tools_flood_text =                margin + width_tools_element + margin;
-            x_tools_flood_number =              margin + width_tools_element + margin + width_tools_text + margin;
+            x_tools_flood_number =              margin + width_tools_element + margin;
             x_tools_automatic_button =          margin;
-            x_tools_automatic_text =            margin + width_tools_element + margin;
             x_tools_label_add =                 margin;
             x_tools_delete_button =             margin;
-            x_tools_delete_text =               margin + width_tools_element + margin;
             x_tools_label_delete =              margin;
 
             % set the y coords:
@@ -138,6 +156,7 @@ classdef view < handle
             y_contrast =                        margin;
             y_navigation =                      margin + height_contrast + margin;
             y_tools =                           margin + height_contrast + margin+ height_navigation + margin;
+            y_channels =                        margin + height_contrast + margin+ height_navigation + margin;
             
             y_contrast_slider =                 margin - 0.4;
 
@@ -153,23 +172,16 @@ classdef view < handle
             y_navigation_slice_next =           margin + height_navigation_element + margin;
             
             y_tools_grow_button =               margin;
-            y_tools_grow_text =                 margin;
             y_tools_grow_number =               margin;
             y_tools_split_button =              margin + height_tools_element + margin;
-            y_tools_split_text =                margin + height_tools_element + margin;
             y_tools_redraw_button =             margin + height_tools_element + margin + height_tools_element + margin;
-            y_tools_redraw_text =               margin + height_tools_element + margin + height_tools_element + margin;
             y_tools_label_edit =                margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin;
             y_tools_draw_button =               margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin;
-            y_tools_draw_text =                 margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin;
             y_tools_flood_button =              margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin;
-            y_tools_flood_text =                margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin;
             y_tools_flood_number =              margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin;
             y_tools_automatic_button =          margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin;
-            y_tools_automatic_text =            margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin;
             y_tools_label_add =                 margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin;
             y_tools_delete_button =             margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin;
-            y_tools_delete_text =               margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin;
             y_tools_label_delete =              margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin;
 
             % set the colors:
@@ -212,6 +224,14 @@ classdef view < handle
             handle_tools.BackgroundColor = color_background;
             handle_tools.ForegroundColor = color_text;
             
+            % create the channels group:
+            handle_channels = uibuttongroup(v.handle_figure);
+            handle_channels.Units = 'normalized';
+            handle_channels.Position = [x_channels y_channels width_channels height_channels];
+            handle_channels.Title = 'Channels';
+            handle_channels.BackgroundColor = color_background;
+            handle_channels.ForegroundColor = color_text;
+            
             % create the contrast slider:
             v.handle_contrast_slider = uicontrol(handle_contrast);
             v.handle_contrast_slider.Units = 'normalized';
@@ -225,7 +245,7 @@ classdef view < handle
             v.handle_navigation_stack_previous = uicontrol(handle_navigation);
             v.handle_navigation_stack_previous.Units = 'normalized';
             v.handle_navigation_stack_previous.Position = [x_navigation_stack_previous y_navigation_stack_previous width_navigation_element height_navigation_element];
-            v.handle_navigation_stack_previous.String = 'Previous Stack';
+            v.handle_navigation_stack_previous.String = '<html> Previous Stack (&darr) </html>';
             v.handle_navigation_stack_previous.Style = 'pushbutton';
             v.handle_navigation_stack_previous.BackgroundColor = color_button;
             v.handle_navigation_stack_previous.ForegroundColor = color_text;
@@ -261,7 +281,7 @@ classdef view < handle
             v.handle_navigation_stack_next = uicontrol(handle_navigation);
             v.handle_navigation_stack_next.Units = 'normalized';
             v.handle_navigation_stack_next.Position = [x_navigation_stack_next y_navigation_stack_next width_navigation_element height_navigation_element];
-            v.handle_navigation_stack_next.String = 'Next Stack';
+            v.handle_navigation_stack_next.String = '<html> Next Stack (&uarr) </html>';
             v.handle_navigation_stack_next.Style = 'pushbutton';
             v.handle_navigation_stack_next.BackgroundColor = color_button;
             v.handle_navigation_stack_next.ForegroundColor = color_text;
@@ -270,7 +290,7 @@ classdef view < handle
             v.handle_navigation_slice_previous = uicontrol(handle_navigation);
             v.handle_navigation_slice_previous.Units = 'normalized';
             v.handle_navigation_slice_previous.Position = [x_navigation_slice_previous y_navigation_slice_previous width_navigation_element height_navigation_element];
-            v.handle_navigation_slice_previous.String = 'Previous Slice';
+            v.handle_navigation_slice_previous.String = '<html> Previous Slice (&larr) </html>';
             v.handle_navigation_slice_previous.Style = 'pushbutton';
             v.handle_navigation_slice_previous.BackgroundColor = color_button;
             v.handle_navigation_slice_previous.ForegroundColor = color_text;
@@ -306,7 +326,7 @@ classdef view < handle
             v.handle_navigation_slice_next = uicontrol(handle_navigation);
             v.handle_navigation_slice_next.Units = 'normalized';
             v.handle_navigation_slice_next.Position = [x_navigation_slice_next y_navigation_slice_next width_navigation_element height_navigation_element];
-            v.handle_navigation_slice_next.String = 'Next Slice';
+            v.handle_navigation_slice_next.String = '<html> Next Slice (&rarr) </html>';
             v.handle_navigation_slice_next.Style = 'pushbutton';
             v.handle_navigation_slice_next.BackgroundColor = color_button;
             v.handle_navigation_slice_next.ForegroundColor = color_text;
@@ -318,17 +338,7 @@ classdef view < handle
             v.handle_tools_grow.String = sprintf('Grow (%s)', v.shortcut_grow);
             v.handle_tools_grow.BackgroundColor = color_button;
             v.handle_tools_grow.ForegroundColor = color_text;
-            
-            % create the grow instructions box:
-            handle_tools_grow_instructions = uicontrol(handle_tools);
-            handle_tools_grow_instructions.Units = 'normalized';
-            handle_tools_grow_instructions.Position = [x_tools_grow_text y_tools_grow_text width_tools_text height_tools_text];
-            handle_tools_grow_instructions.Style = 'text';
-            handle_tools_grow_instructions.Enable = 'inactive';
-            handle_tools_grow_instructions.String = 'Click on any segmentation you want to make larger by the # of pixels in the box.';
-            handle_tools_grow_instructions.BackgroundColor = color_background;
-            handle_tools_grow_instructions.ForegroundColor = color_text;
-            handle_tools_grow_instructions.HorizontalAlignment = 'Left';
+            v.handle_tools_grow.Tooltip = 'Click on any segmentation you want to make larger by the # of pixels in the box.';
             
             % create the grow number:
             v.handle_tools_grow_number = uicontrol(handle_tools);
@@ -345,17 +355,7 @@ classdef view < handle
             v.handle_tools_split.String = sprintf('Split (%s)', v.shortcut_split);
             v.handle_tools_split.BackgroundColor = color_button;
             v.handle_tools_split.ForegroundColor = color_text;
-            
-            % create the split instructions box:
-            handle_tools_split_instructions = uicontrol(handle_tools);
-            handle_tools_split_instructions.Units = 'normalized';
-            handle_tools_split_instructions.Position = [x_tools_split_text y_tools_split_text width_tools_text height_tools_text];
-            handle_tools_split_instructions.Style = 'text';
-            handle_tools_split_instructions.Enable = 'inactive';
-            handle_tools_split_instructions.String = 'Click on any segmentation you want to split. This works best on snowman-shaped segmentations.';
-            handle_tools_split_instructions.BackgroundColor = color_background;
-            handle_tools_split_instructions.ForegroundColor = color_text;
-            handle_tools_split_instructions.HorizontalAlignment = 'Left';
+            v.handle_tools_split.Tooltip = 'Click on any segmentation you want to split. This works best on snowman-shaped segmentations.';
             
             % create the redraw button:
             v.handle_tools_redraw = uicontrol(handle_tools);
@@ -364,17 +364,7 @@ classdef view < handle
             v.handle_tools_redraw.String = sprintf('Redraw (%s)', v.shortcut_redraw);
             v.handle_tools_redraw.BackgroundColor = color_button;
             v.handle_tools_redraw.ForegroundColor = color_text;
-            
-            % create the redraw instructions box:
-            handle_tools_redraw_instructions = uicontrol(handle_tools);
-            handle_tools_redraw_instructions.Units = 'normalized';
-            handle_tools_redraw_instructions.Position = [x_tools_redraw_text y_tools_redraw_text width_tools_text height_tools_text];
-            handle_tools_redraw_instructions.Style = 'text';
-            handle_tools_redraw_instructions.Enable = 'inactive';
-            handle_tools_redraw_instructions.String = 'Draw a portion of a segmentation.';
-            handle_tools_redraw_instructions.BackgroundColor = color_background;
-            handle_tools_redraw_instructions.ForegroundColor = color_text;
-            handle_tools_redraw_instructions.HorizontalAlignment = 'Left';
+            v.handle_tools_redraw.Tooltip = 'Draw a portion of a segmentation.';
             
             % create the edit label:
             handle_tools_edit_label = uicontrol(handle_tools);
@@ -394,17 +384,7 @@ classdef view < handle
             v.handle_tools_draw.String = sprintf('Draw (%s)', v.shortcut_draw);
             v.handle_tools_draw.BackgroundColor = color_button;
             v.handle_tools_draw.ForegroundColor = color_text;
-            
-            % create the draw instructions box:
-            handle_tools_draw_instructions = uicontrol(handle_tools);
-            handle_tools_draw_instructions.Units = 'normalized';
-            handle_tools_draw_instructions.Position = [x_tools_draw_text y_tools_draw_text width_tools_text height_tools_text];
-            handle_tools_draw_instructions.Style = 'text';
-            handle_tools_draw_instructions.Enable = 'inactive';
-            handle_tools_draw_instructions.String = 'Draw a segmentation.';
-            handle_tools_draw_instructions.BackgroundColor = color_background;
-            handle_tools_draw_instructions.ForegroundColor = color_text;
-            handle_tools_draw_instructions.HorizontalAlignment = 'Left';
+            v.handle_tools_draw.Tooltip = 'Draw a segmentation.';
             
             % create the flood button:
             v.handle_tools_flood = uicontrol(handle_tools);
@@ -413,17 +393,7 @@ classdef view < handle
             v.handle_tools_flood.String = sprintf('Flood (%s)', v.shortcut_flood);
             v.handle_tools_flood.BackgroundColor = color_button;
             v.handle_tools_flood.ForegroundColor = color_text;
-            
-            % create the flood instructions box:
-            handle_tools_flood_instructions = uicontrol(handle_tools);
-            handle_tools_flood_instructions.Units = 'normalized';
-            handle_tools_flood_instructions.Position = [x_tools_flood_text y_tools_flood_text width_tools_text height_tools_text];
-            handle_tools_flood_instructions.Style = 'text';
-            handle_tools_flood_instructions.Enable = 'inactive';
-            handle_tools_flood_instructions.String = 'Click on a part of the image you want to segment by filling outwards from that point until the intensity is not in range of the value in the box.';
-            handle_tools_flood_instructions.BackgroundColor = color_background;
-            handle_tools_flood_instructions.ForegroundColor = color_text;
-            handle_tools_flood_instructions.HorizontalAlignment = 'Left';
+            v.handle_tools_flood.Tooltip = 'Click on a part of the image you want to segment by filling outwards from that point until the intensity is not in range of the value in the box.';
             
             % create the flood number:
             v.handle_tools_flood_number = uicontrol(handle_tools);
@@ -440,17 +410,7 @@ classdef view < handle
             v.handle_tools_automatic.String = sprintf('Automatic (%s)', v.shortcut_automatic);
             v.handle_tools_automatic.BackgroundColor = color_button;
             v.handle_tools_automatic.ForegroundColor = color_text;
-            
-            % create the auotmatic instructions box:
-            handle_tools_automatic_instructions = uicontrol(handle_tools);
-            handle_tools_automatic_instructions.Units = 'normalized';
-            handle_tools_automatic_instructions.Position = [x_tools_automatic_text y_tools_automatic_text width_tools_text height_tools_text];
-            handle_tools_automatic_instructions.Style = 'text';
-            handle_tools_automatic_instructions.Enable = 'inactive';
-            handle_tools_automatic_instructions.String = 'NOT YET WORKING';
-            handle_tools_automatic_instructions.BackgroundColor = color_background;
-            handle_tools_automatic_instructions.ForegroundColor = color_text;
-            handle_tools_automatic_instructions.HorizontalAlignment = 'Left';
+            v.handle_tools_automatic.Tooltip = 'NOT YET WORKING';
             
             % create the add label:
             handle_tools_add_label = uicontrol(handle_tools);
@@ -470,17 +430,7 @@ classdef view < handle
             v.handle_tools_delete.String = sprintf('Delete (%s)', v.shortcut_delete);
             v.handle_tools_delete.BackgroundColor = color_button;
             v.handle_tools_delete.ForegroundColor = color_text;
-            
-            % create the delete instructions box:
-            handle_tools_delete_instructions = uicontrol(handle_tools);
-            handle_tools_delete_instructions.Units = 'normalized';
-            handle_tools_delete_instructions.Position = [x_tools_delete_text y_tools_delete_text width_tools_text height_tools_text];
-            handle_tools_delete_instructions.Style = 'text';
-            handle_tools_delete_instructions.Enable = 'inactive';
-            handle_tools_delete_instructions.String = 'Click on any segmentation you want to delete.';
-            handle_tools_delete_instructions.BackgroundColor = color_background;
-            handle_tools_delete_instructions.ForegroundColor = color_text;
-            handle_tools_delete_instructions.HorizontalAlignment = 'Left';
+            v.handle_tools_delete.Tooltip = 'Click on any segmentation you want to delete.';
             
             % create the delete label:
             handle_tools_delete_label = uicontrol(handle_tools);
@@ -492,35 +442,80 @@ classdef view < handle
             handle_tools_delete_label.BackgroundColor = color_background;
             handle_tools_delete_label.ForegroundColor = color_text;
             handle_tools_delete_label.HorizontalAlignment = 'Left';
-           
-            % edit GUI to the center of the screen:
-            movegui(v.handle_figure, 'center');
+            
+            % create the radiobutton group for channel to use for
+            % calculations:
+            v.handle_all_channels.handle_button_group = uibuttongroup(handle_channels);
+            v.handle_all_channels.handle_button_group.Units = 'normalized';
+            v.handle_all_channels.handle_button_group.Position = [x_channels_group margin width_channels_group height_channels_group];
+            v.handle_all_channels.handle_button_group.BackgroundColor = color_background;
+            v.handle_all_channels.handle_button_group.ForegroundColor = color_background;
+            
+            % for each channel:
+            for i = 1:gui_data.num_channels
+                
+                % create the channel radiobuttons:
+                temp_handle_radiobutton = sprintf('radiobutton_%01d', i);
+                v.handle_all_channels.(temp_handle_radiobutton) = uicontrol(v.handle_all_channels.handle_button_group);
+                v.handle_all_channels.(temp_handle_radiobutton).Units = 'normalized';
+                v.handle_all_channels.(temp_handle_radiobutton).Position = [x_channels_radiobutton ((margin * i) + ((i-1)*(height_channels_radiobutton))) width_channels_radiobutton height_channels_radiobutton];
+                v.handle_all_channels.(temp_handle_radiobutton).Style = 'radiobutton';
+                v.handle_all_channels.(temp_handle_radiobutton).BackgroundColor = color_background;
+                v.handle_all_channels.(temp_handle_radiobutton).ForegroundColor = color_text;
+                
+                % create the channel toggles:
+                temp_handle_pushbutton = sprintf('pushbutton_%01d', i);
+                v.handle_all_channels.(temp_handle_pushbutton) = uicontrol(handle_channels);
+                v.handle_all_channels.(temp_handle_pushbutton).Units = 'normalized';
+                v.handle_all_channels.(temp_handle_pushbutton).Position = [x_channels_toggle ((margin * i) + ((i-1)*(height_channels_toggle))) width_channels_toggle height_channels_toggle];
+                v.handle_all_channels.(temp_handle_pushbutton).Style = 'pushbutton';
+                v.handle_all_channels.(temp_handle_pushbutton).String = gui_data.list_channels{i};
+                v.handle_all_channels.(temp_handle_pushbutton).BackgroundColor = color_button;
+                v.handle_all_channels.(temp_handle_pushbutton).ForegroundColor = color_text;
+                
+                % create the channel color dropdowns:
+                temp_handle_popupmenu = sprintf('popupmenu_%01d', i);
+                v.handle_all_channels.(temp_handle_popupmenu) = uicontrol(handle_channels);
+                v.handle_all_channels.(temp_handle_popupmenu).Units = 'normalized';
+                v.handle_all_channels.(temp_handle_popupmenu).Position = [x_channels_dropdown ((margin * i) + ((i-1)*(height_channels_dropdown))) width_channels_dropdown height_channels_dropdown];
+                v.handle_all_channels.(temp_handle_popupmenu).Style = 'popupmenu';
+                v.handle_all_channels.(temp_handle_popupmenu).String = {'hi'};
+                v.handle_all_channels.(temp_handle_popupmenu).BackgroundColor = color_button;
+                
+            end
             
             % set callbacks for the figure:
             v.handle_figure.KeyPressFcn = @v.callback_key_press;
 
             % hook up to the controller to the view:
-            v.c = organoids2.review_2D_segmentations.controller(v, settings);
+            c = organoids2.utilities.edit_2D_segmentations.controller(v, gui_data);
             
-            % hook up the view to the controller:
-            vc = v.c; 
-            v.handle_contrast_slider.Callback =             {@vc.callback_contrast};
-            v.handle_navigation_stack_previous.Callback =   {@vc.callback_stack_previous};
-            v.handle_navigation_stack_current.Callback =    {@vc.callback_stack_current};
-            v.handle_navigation_stack_next.Callback =       {@vc.callback_stack_next};
-            v.handle_navigation_slice_previous.Callback =   {@vc.callback_slice_previous};
-            v.handle_navigation_slice_current.Callback =    {@vc.callback_slice_current};
-            v.handle_navigation_slice_next.Callback =       {@vc.callback_slice_next};
-            v.handle_tools_delete.Callback =                {@vc.callback_delete};
-            v.handle_tools_automatic.Callback =             {@vc.callback_automatic};
-            v.handle_tools_flood.Callback =                 {@vc.callback_flood};
-            v.handle_tools_draw.Callback =                  {@vc.callback_draw};
-            v.handle_tools_redraw.Callback =                {@vc.callback_redraw};
-            v.handle_tools_split.Callback =                 {@vc.callback_split};
-            v.handle_tools_grow.Callback =                  {@vc.callback_grow};
-
+            % hook up the view to the controller: 
+            v.handle_contrast_slider.Callback =                                 {@c.callback_contrast};
+            v.handle_navigation_stack_previous.Callback =                       {@c.callback_stack_previous};
+            v.handle_navigation_stack_current.Callback =                        {@c.callback_stack_current};
+            v.handle_navigation_stack_next.Callback =                           {@c.callback_stack_next};
+            v.handle_navigation_slice_previous.Callback =                       {@c.callback_slice_previous};
+            v.handle_navigation_slice_current.Callback =                        {@c.callback_slice_current};
+            v.handle_navigation_slice_next.Callback =                           {@c.callback_slice_next};
+            v.handle_tools_delete.Callback =                                    {@c.callback_delete};
+            v.handle_tools_automatic.Callback =                                 {@c.callback_automatic};
+            v.handle_tools_flood.Callback =                                     {@c.callback_flood};
+            v.handle_tools_draw.Callback =                                      {@c.callback_draw};
+            v.handle_tools_redraw.Callback =                                    {@c.callback_redraw};
+            v.handle_tools_split.Callback =                                     {@c.callback_split};
+            v.handle_tools_grow.Callback =                                      {@c.callback_grow};
+            v.handle_all_channels.handle_button_group.SelectionChangedFcn =     {@c.callback_channels_change_calculation};
+            for i = 1:gui_data.num_channels
+               v.handle_all_channels.(sprintf('pushbutton_%01d', i)).Callback =     {@c.callback_channels_change_visibility, i}; 
+               v.handle_all_channels.(sprintf('popupmenu_%01d', i)).Callback =      {@c.callback_channels_change_color, i};
+            end
+            
             % make all text larger:
             set(findall(gcf, '-property', 'FontSize'), 'FontSize', 16);
+            
+            % edit GUI to the center of the screen:
+            movegui(v.handle_figure, 'center');
             
             % make the figure window visible:
             v.handle_figure.Visible = 'on';

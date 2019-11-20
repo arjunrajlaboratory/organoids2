@@ -134,13 +134,8 @@ function process_nucleaizer_results(folder, structure_name)
                 % get the mask for just that object:
                 mask_object = mask == list_object_nums(k);
 
-%                 % if the user wants to erode the masks:
-%                 if strcmp(erosion_decision, 'yes')
-
-                    % erode the mask:
-                    mask_object = imerode(mask_object, strel('disk', 1));
-% 
-%                 end
+%                 % erode the mask:
+%                 mask_object = imerode(mask_object, strel('disk', 1));
 
                 % get the boundary:
                 boundary = bwboundaries(mask_object);
@@ -149,7 +144,7 @@ function process_nucleaizer_results(folder, structure_name)
                 if numel(boundary) ~= 0
 
                     % get the slice number:
-                    num_slice = str2double(list_files_image_stack(j).name(13:15));
+                    num_slice = str2double(list_files_image_stack(j).name(9:11));
 
                     % get boundary:
                     coords_x = boundary{1}(:,2);
@@ -159,10 +154,10 @@ function process_nucleaizer_results(folder, structure_name)
                     [coords_boundary, coords_mask] = organoids2.utilities.get_boundary_and_mask_from_coords(coords_x, coords_y, size(mask, 2), size(mask, 1), num_slice);
 
                     % save:
-                    results(end+1).slice = num_slice;
-                    results(end).segmentation_id = index;
-                    results(end).boundary = coords_boundary;
-                    results(end).mask = coords_mask;
+                    results(index).slice = num_slice;
+                    results(index).segmentation_id = index;
+                    results(index).boundary = coords_boundary;
+                    results(index).mask = coords_mask;
 
                     % increment the index:
                     index = index + 1;

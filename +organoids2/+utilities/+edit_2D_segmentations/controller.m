@@ -2,32 +2,35 @@ classdef controller < handle
     
     properties
         
-        % segmentation settings:
-        settings;
-        
         % GUI data:
-        path_data;
+        seed_location;
+        path_segmentations;
+        path_images;
         list_segmentation_files;
+        list_images;
         list_channels;
+        num_channels;
         num_stacks;
-        current_stack;
         num_slices;
+        current_stack;
+        current_slice;
         image_width;
         image_height;
-        current_slice;
-        image_display;
-        image_calculate;
+        image_display_stack;
+        image_calculate_stack;
         contrast_max;
+        list_channel_names;
+        list_channel_colors;
+        channels_visibility;
+        channels_color;
+        channel_for_calculation;
         axis_limits_x;
         axis_limits_y;
         
         % GUI components:       
         handle_figure;
-        
         handle_axes;
-        
         handle_contrast_slider;
-        
         handle_navigation_stack_next;
         handle_navigation_stack_current;
         handle_navigation_stack_total;
@@ -36,19 +39,16 @@ classdef controller < handle
         handle_navigation_slice_current;
         handle_navigation_slice_total;
         handle_navigation_slice_previous;
-        
         handle_tools_delete;
-        
         handle_tools_automatic;
         handle_tools_flood;
         handle_tools_flood_number;
         handle_tools_draw;
-        
         handle_tools_split;
         handle_tools_redraw;
         handle_tools_grow;
         handle_tools_grow_number;
-        
+        handle_all_channels;
         handle_segmentations;
         
         % model:
@@ -59,11 +59,8 @@ classdef controller < handle
     methods
         
         % constructor:
-        function c = controller(v, settings)
-            
-            % get settings:
-            c.settings = settings;
-            
+        function c = controller(v, gui_data)
+                       
             % link to view:
             c.handle_figure =                               v.handle_figure;
             c.handle_axes =                                 v.handle_axes;
@@ -85,16 +82,50 @@ classdef controller < handle
             c.handle_tools_redraw =                         v.handle_tools_redraw;
             c.handle_tools_grow =                           v.handle_tools_grow;
             c.handle_tools_grow_number =                    v.handle_tools_grow_number;
-
+            c.handle_all_channels =                         v.handle_all_channels;
+            
             % get GUI data:
-            c.path_data = fullfile(pwd, '..');
-            c.list_segmentation_files = settings.list_segmentation_files;
-            c.list_channels = settings.list_channels;
-            c.num_stacks = numel(c.list_segmentation_files);
+            c.seed_location =               gui_data.seed_location;
+            c.path_segmentations =          gui_data.path_segmentations;
+            c.path_images =                 gui_data.path_images;
+            c.list_segmentation_files =     gui_data.list_segmentation_files;
+            c.list_images =                 gui_data.list_images;
+            c.list_channels =               gui_data.list_channels;
+            c.num_channels =                gui_data.num_channels;
+           
+            % set default slice and stack number:
             c.current_stack = 1;
             c.contrast_max = 1;
             
-            % set the default tolerances:
+            % get the number of stacks:
+            c.num_stacks = numel(c.list_segmentation_files);
+            
+            % set the default channel for calculation:
+            c.channel_for_calculation = 1;
+            set(c.handle_all_channels.handle_button_group, 'SelectedObject', c.handle_all_channels.(sprintf('radiobutton_%01d', c.channel_for_calculation)));
+            
+            % set all channels to be visible by default:
+            c.channels_visibility = cell(1);
+            c.channels_visibility{1} = 'on';
+            c.channels_visibility = repmat(c.channels_visibility, 1, c.num_channels);
+            
+            % set list of channel colors:
+            c.list_channel_names = {'blue', 'green', 'red', 'gray'};
+            c.list_channel_colors = {[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.5, 0.5, 0.5]};
+            
+            % for each channel:
+            for i = 1:c.num_channels
+                
+                % assign list of colors to the popupmenu:
+                c.handle_all_channels.(sprintf('popupmenu_%01d', i)).String = c.list_channel_names;
+               
+                % assign each channel to a color:
+                c.channels_color{i} = i;
+                c.handle_all_channels.(sprintf('popupmenu_%01d', i)).Value = c.channels_color{i};
+                
+            end
+            
+            % set the default numbers for various tools:
             set(c.handle_tools_flood_number, 'String', 1000);
             set(c.handle_tools_grow_number, 'String', 1);
             
@@ -110,7 +141,7 @@ classdef controller < handle
         function c = load_data(c)
             
             % load the segmentations:
-            c.m = organoids2.review_2D_segmentations.model(c.list_segmentation_files{c.current_stack});
+            c.m = organoids2.utilities.edit_2D_segmentations.model(fullfile(c.path_segmentations, c.list_segmentation_files{c.current_stack}));
             
             % have the segmentations save when the window closes:
             c.handle_figure.CloseRequestFcn = @c.callback_close_window;
@@ -118,27 +149,21 @@ classdef controller < handle
             % get the image name:
             image_name = c.list_segmentation_files{c.current_stack}(end-9:end-4);
             
-            % load the image for calculations:
-            % c.image_calculate = c.load_stack(fullfile(c.path_data, sprintf('%s_%s', image_name, c.settings.string_image_calculate)));
-            
             % load the image for display:
-            c.image_display = c.load_stack(image_name, c.list_channels);
-            % c.image_display = c.load_stack(fullfile(c.path_data, sprintf('%s_%s', image_name, c.settings.string_image_display)));
+            c.image_display_stack = c.load_stack(c.path_images, image_name, c.list_channels);
             
-            % depending on the structure to segment:
+            % if you want to work on buds:
             if contains(c.list_segmentation_files{c.current_stack}, 'buds_guess')
-                c.image_display = max(c.image_display, [], 4);
+                
+                % use a max merge for display:
+                c.image_display_stack = max(c.image_display_stack, [], 3);
+                
             end
             
             % update number of image size:
-            c.num_slices = size(c.image_display, 4);
-            c.image_width = size(c.image_display, 2);
-            c.image_height = size(c.image_display, 1);
-            
-            % smooth the image to use for calculations:
-            for i = 1:c.num_slices
-                c.image_calculate(:,:,i) = imgaussfilt(c.image_calculate(:,:,i), 1);
-            end
+            c.num_slices = size(c.image_display_stack, 3);
+            c.image_width = size(c.image_display_stack, 2);
+            c.image_height = size(c.image_display_stack, 1);
             
             % update the current slice:
             c.current_slice = 1;
@@ -155,15 +180,50 @@ classdef controller < handle
         
         % function to update the display:
         function c = update_display(c)
+            
+            % get the image for calculations:
+            c.image_calculate_stack = squeeze(c.image_display_stack(:,:,:,c.channel_for_calculation));
+            
+            % smooth the image to use for calculations:
+            for i = 1:c.num_slices
+                c.image_calculate_stack(:,:,i) = imgaussfilt(c.image_calculate_stack(:,:,i), 1);
+            end
 
-            % get the axis limits:
+            % get the current axis limits:
             c.axis_limits_x = get(c.handle_axes, 'XLim');
             c.axis_limits_y = get(c.handle_axes, 'YLim');
             
-            % show the current image slice:
-            imshow(imadjust(squeeze(c.image_display(:,:,:,c.current_slice)), [0 c.contrast_max]), 'Parent', c.handle_axes);
+            % create a blank image to display:
+            image_display_slice = zeros(c.image_height, c.image_width, 3, 'like', c.image_display_stack);
             
-            % set the axis limits:
+            % for each channel:
+            for i = 1:numel(c.channels_visibility)
+                
+                % if the channel should be on:
+                if strcmp(c.channels_visibility{i}, 'on')
+                    
+                    % get the color to use for the channel:
+                    temp_color = c.list_channel_colors{c.channels_color{i}};
+                    
+                    % get the image to use:
+                    temp_image = repmat(squeeze(c.image_display_stack(:,:,c.current_slice,i)), [1, 1, 3]);
+                    
+                    % convert the image to RGB:
+                    for j = 1:3
+                        temp_image(:,:,j) = temp_image(:,:,j) * temp_color(j);
+                    end
+                    
+                    % add it to the display:
+                    image_display_slice = image_display_slice + temp_image;
+                    
+                end
+                
+            end
+            
+            % show the current image slice:
+            imshow(imadjust(image_display_slice, [0 c.contrast_max]), 'Parent', c.handle_axes);
+            
+            % re-apply the axis limits (this maintains zoom):
             set(c.handle_axes, 'XLim', c.axis_limits_x);
             set(c.handle_axes, 'YLim', c.axis_limits_y);
             
@@ -413,7 +473,7 @@ classdef controller < handle
 %             
 %             coords_mask(:,4) = deal(0);
 %             for i = 1:size(coords_mask, 1)
-%                 coords_mask(i,4) = c.image_display(coords_mask(i,2), coords_mask(i,1), 1, c.current_slice);
+%                 coords_mask(i,4) = c.image_display_stack(coords_mask(i,2), coords_mask(i,1), 1, c.current_slice);
 %             end
 %             
 %             [counts, edges] = histcounts(coords_mask(:,4));
@@ -421,7 +481,7 @@ classdef controller < handle
 %             index_minima = find(is_minima);
 %             index_minima = index_minima(1);
 %             threshold = mean(edges(index_minima:(index_minima+1)));
-%             BW = c.image_display(:, :, 1, c.current_slice) > threshold;
+%             BW = c.image_display_stack(:, :, 1, c.current_slice) > threshold;
 %             
 %             boundaries = bwboundaries(BW);
 %             
@@ -438,7 +498,7 @@ classdef controller < handle
 %             threshold = find(minima);
 %             threshold = edges(threshold(2));
 %             
-%             BW = imbinarize(c.image_display(:, :, 1, c.current_slice), 1404);
+%             BW = imbinarize(c.image_display_stack(:, :, 1, c.current_slice), 1404);
 %             figure; imshow(BW);
 %             
 %             % add object to model:
@@ -465,7 +525,7 @@ classdef controller < handle
                 tolerance = str2double(get(c.handle_tools_flood_number, 'String'));
 
                 % expand from the seed point to get the boundary:
-                [coords_boundary, coords_mask] = organoids2.utilities.expand_seed_point_to_boundary(c.image_calculate(:,:,c.current_slice), c.current_slice, point, c.settings.seed_location, tolerance);
+                [coords_boundary, coords_mask] = organoids2.utilities.expand_seed_point_to_boundary(c.image_calculate_stack(:,:,c.current_slice), c.current_slice, point, c.seed_location, tolerance);
 
                 % add object to model:
                 c.m = c.m.add_segmentation(coords_boundary, coords_mask);
@@ -695,6 +755,59 @@ classdef controller < handle
             
         end
         
+        % callback for changing the channel for calculation:
+        function c = callback_channels_change_calculation(c, ~, ~)
+            
+            % get the value of each radiobutton:
+            values = zeros(1, c.num_channels);
+            for i = 1:c.num_channels
+                values(i) = c.handle_all_channels.(sprintf('radiobutton_%01d', i)).Value;
+            end
+            
+            % updaet the channel to use for calculations:
+            c.channel_for_calculation = find(values == 1);
+            
+            % update the display:
+            c = update_display(c);
+            
+        end
+        
+        % callback for changing channel toggle:
+        function c = callback_channels_change_visibility(c, ~, ~, channel_number)
+            
+            % depending on the state of the toggle:
+            switch c.channels_visibility{channel_number}
+               
+                % if it is on:
+                case 'on'
+                    
+                    % turn it off:
+                    c.channels_visibility{channel_number} = 'off';
+                    
+                % if it is off:
+                case 'off'
+                    
+                    % turn it on:
+                    c.channels_visibility{channel_number} = 'on';
+                
+            end
+            
+            % update the display:
+            c = update_display(c);
+            
+        end
+        
+        % callback for changing channel color:
+        function c = callback_channels_change_color(c, ~, ~, channel_number)
+            
+            % update the channel assignment:
+            c.channels_color{channel_number} = get(c.handle_all_channels.(sprintf('popupmenu_%01d', channel_number)), 'Value');
+            
+            % update the display:
+            c = update_display(c);
+            
+        end
+        
         % callback to close the window:
         function callback_close_window(c, ~, ~)
             
@@ -708,13 +821,13 @@ classdef controller < handle
     methods (Static)
         
         % function to load an image stack:
-        function stack = load_stack(image_name, list_channels)
+        function stack = load_stack(path_images, image_name, list_channels)
             
             % for each channel:
             for i = 1:numel(list_channels)
                
                 % load the channel:
-                temp_channel = readmm(fullfile(pwd, '..', sprintf('%s_%s.tif', image_name, list_channels{i})));
+                temp_channel = readmm(fullfile(path_images, sprintf('%s_%s.tif', image_name, list_channels{i})));
                 temp_channel = temp_channel.imagedata;
                 
                 if i == 1
