@@ -33,6 +33,10 @@ function using_nucleaizer
         save_slices(stack_XZ, 9, image_name, directory_XZ);
         
     end
+    
+    % create a folder to store the nucleaizer results:
+    mkdir(fullfile('slices_XY', 'results'));
+    mkdir(fullfile('slices_XZ', 'results'));
 
 end
 

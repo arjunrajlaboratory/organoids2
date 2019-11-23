@@ -19,7 +19,7 @@ function data = format_data(data)
         if (contains('organoid', name_segmentation) || contains('cyst', name_segmentation)) && numel(segmentations_temp_3D) > 1
             
             % give the user an error:
-            error(sprtinf('There are two 3D %s objects! Go back and fix the segmentations.', name_segmentation));
+            error(sprintf('There are two 3D %s objects! Go back and fix the segmentations.', name_segmentation));
             
         end
         

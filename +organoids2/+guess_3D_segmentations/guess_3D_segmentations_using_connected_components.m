@@ -9,6 +9,9 @@ function guess_3D_segmentations_using_connected_components
         % get the image name:
         image_name = list_files(i).name(end-9:end-4);
         
+        % print status:
+        fprintf('Working on stack %03d / %03d (%s) \n', i, numel(list_files), image_name);
+        
         % load the image to get image size:
         image = readmm(fullfile(pwd, '..', sprintf('%s_dapi.tif', image_name)));
         image_height = image.height;
