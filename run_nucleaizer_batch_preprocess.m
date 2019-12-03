@@ -11,7 +11,7 @@ function run_nucleaizer_batch_preprocess(paths_to_data)
 
     % create a variable to store the key the connects a folder to a unique
     % number:
-    key = cell(num_folders, 2);
+    key = cell(2, num_folders);
 
     % for each folder:
     for i = 1:numel(paths_to_data)
