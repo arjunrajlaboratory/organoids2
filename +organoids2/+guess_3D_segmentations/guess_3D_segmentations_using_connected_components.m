@@ -4,7 +4,7 @@ function guess_3D_segmentations_using_connected_components
     list_files = dir('*final_2D*.mat');
 
     % for each file:
-    for i = 1:numel(list_files)
+    parfor i = 1:numel(list_files)
         
         % get the image name:
         image_name = list_files(i).name(end-9:end-4);
@@ -30,7 +30,7 @@ function guess_3D_segmentations_using_connected_components
         end
         
         % save segmentations:
-        save(strrep(list_files(i).name, 'final_2D', 'guess_3D'), 'segmentations');
+        organoids2.utilities.save_within_parfor_loop(strrep(list_files(i).name, 'final_2D', 'guess_3D'), 'segmentations');
         
     end
     

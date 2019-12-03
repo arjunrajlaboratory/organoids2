@@ -1,17 +1,24 @@
 function guess_3D_segmentations_using_orthogonal_segmentations
 
+    tic;
+
     % get the list of segmentation files:
     list_files_XY = dir('nuclei_XY_final_2D*.mat');
     list_files_XZ = dir('nuclei_XZ_final_2D*.mat');
     
+    % get the number of files:
+    num_files = numel(list_files_XY);
+    
     % for each file:
-    for i = 1:numel(list_files_XY)
+    parfor i = 1:num_files
+    % parfor i = 1:numel(list_files_XY)
         
         % get the image name:
         image_name = list_files_XY(i).name(end-9:end-4);
         
         % print status:
-        fprintf('Working on stack %03d / %03d (%s) \n', i, numel(list_files_XY), image_name);
+        fprintf('Working on stack %03d / %03d (%s) \n', i, num_files, image_name);
+        %fprintf('Working on stack %03d / %03d (%s) \n', i, numel(list_files_XY), image_name);
         
         % load the segmentations:
         segmentations_XY = organoids2.utilities.load_structure_from_file(list_files_XY(i).name);
@@ -32,9 +39,11 @@ function guess_3D_segmentations_using_orthogonal_segmentations
         end
         
         % save segmentations:
-        save(strrep(list_files_XY(i).name, 'XY_final_2D', 'guess_3D'), 'segmentations_XY');
+        organoids2.utilities.save_within_parfor_loop(strrep(list_files_XY(i).name, 'XY_final_2D', 'guess_3D'), 'segmentations_XY');
         
     end
+    
+    toc;
 
 end
 
