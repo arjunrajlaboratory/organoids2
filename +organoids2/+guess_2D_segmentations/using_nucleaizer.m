@@ -16,10 +16,13 @@ function using_nucleaizer
     mkdir(directory_XZ);
 
     % for each image:
-    for i = 1:num_images
+    parfor i = 1:num_images
         
         % get the image name:
         image_name = list_images(i).name(1:6);
+        
+        % print status:
+        fprintf('Working on stack %03d / %03d (%s) \n', i, num_images, image_name);
         
         % load the XY stack:
         stack_XY = readmm(fullfile(pwd, '..', list_images(i).name));

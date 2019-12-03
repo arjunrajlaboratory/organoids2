@@ -2,15 +2,18 @@ function guess_3D_segmentations_using_connected_components
 
     % get the list of segmentation files:
     list_files = dir('*final_2D*.mat');
+    
+    % get the number of files:
+    num_files = numel(list_files);
 
     % for each file:
-    parfor i = 1:numel(list_files)
+    parfor i = 1:num_files
         
         % get the image name:
         image_name = list_files(i).name(end-9:end-4);
         
         % print status:
-        fprintf('Working on stack %03d / %03d (%s) \n', i, numel(list_files), image_name);
+        fprintf('Working on stack %03d / %03d (%s) \n', i, num_files, image_name);
         
         % load the image to get image size:
         image = readmm(fullfile(pwd, '..', sprintf('%s_dapi.tif', image_name)));

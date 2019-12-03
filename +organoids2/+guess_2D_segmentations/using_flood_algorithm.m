@@ -28,13 +28,13 @@ function using_flood_algorithm
     num_images = numel(list_images);
     
     % for each image:
-    for i = 1:num_images
+    parfor i = 1:num_images
         
         % get the image name:
         image_name = list_images(i).name(1:6);
         
-        % display status:
-        fprintf('Working on %s\n', image_name);
+        % print status:
+        fprintf('Working on stack %03d / %03d (%s) \n', i, num_images, image_name);
         
         % load the image:
         image = readmm(fullfile(pwd, '..', list_images(i).name));
@@ -47,10 +47,11 @@ function using_flood_algorithm
         segmentations = organoids2.utilities.remove_segmentations_touching_corners(segmentations, size(image, 2), size(image, 1));
         
         % save the segmentations:
-        save(sprintf('%s_guess_2D_%s.mat', structure_to_segment, image_name), 'segmentations');
+        organoids2.utilities.save_within_parfor_loop(sprintf('%s_guess_2D_%s.mat', structure_to_segment, image_name), 'segmentations');
+        
         
     end
-
+    
 end
 
 function segmentations = guess_segmentations(image, seed_location, default_tolerance)
