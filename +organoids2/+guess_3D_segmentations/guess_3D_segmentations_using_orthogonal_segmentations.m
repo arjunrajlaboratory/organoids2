@@ -9,7 +9,7 @@ function guess_3D_segmentations_using_orthogonal_segmentations
     
     % for each file:
     parfor i = 1:num_files
-        
+                
         % get the image name:
         image_name = list_files_XY(i).name(end-9:end-4);
         
@@ -20,7 +20,7 @@ function guess_3D_segmentations_using_orthogonal_segmentations
         segmentations_XY = organoids2.utilities.load_structure_from_file(list_files_XY(i).name);
         segmentations_XZ = organoids2.utilities.load_structure_from_file(list_files_XZ(i).name);
         
-        % convert the XZ resul
+        % convert the XZ results:
         segmentations_XZ = convert_XZ_to_XY(segmentations_XZ);
         
         % get the 3D segmentation:
@@ -35,7 +35,7 @@ function guess_3D_segmentations_using_orthogonal_segmentations
         end
         
         % save segmentations:
-        organoids2.utilities.save_within_parfor_loop(strrep(list_files_XY(i).name, 'XY_final_2D', 'guess_3D'), 'segmentations_XY');
+        organoids2.utilities.save_within_parfor_loop(strrep(list_files_XY(i).name, 'XY_final_2D', 'guess_3D'), segmentations_XY);
         
     end
     

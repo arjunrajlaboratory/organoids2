@@ -33,7 +33,7 @@ function guess_3D_segmentations_using_connected_components
         end
         
         % save segmentations:
-        organoids2.utilities.save_within_parfor_loop(strrep(list_files(i).name, 'final_2D', 'guess_3D'), 'segmentations');
+        organoids2.utilities.save_within_parfor_loop(strrep(list_files(i).name, 'final_2D', 'guess_3D'), segmentations);
         
     end
     
