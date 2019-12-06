@@ -1,12 +1,24 @@
-function guess_3D_segmentations
+function guess_3D_segmentations(varargin)
 
-    % ask user how they want to segment the data:
+    % set the list of segmentation methods:
     list_segmentation_methods = {'using orthogonal segmentations', 'using connected components'};
-    [index, ~] = listdlg('ListString', list_segmentation_methods, 'SelectionMode', 'single');
-    segmentation_method = list_segmentation_methods{index};
+
+    % if the user supplied a single input:
+    if nargin == 1
+        
+        % set the segmentation method to use as the input:
+        index = varargin{1};
+        
+    % otherwise:
+    else
+        
+        % ask user how they want to segment the data:
+        [index, ~] = listdlg('ListString', list_segmentation_methods, 'SelectionMode', 'single');
+        
+    end
     
-    % depending on the structure to segment:
-    switch segmentation_method
+    % depending on the segmentation method to use:
+    switch list_segmentation_methods{index}
         
         case 'using orthogonal segmentations'
             
