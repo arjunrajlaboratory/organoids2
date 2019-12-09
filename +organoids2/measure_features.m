@@ -7,7 +7,7 @@ function measure_features
     list_segmentation_files = dir('all_segmentations*.mat');
     
     % for each file:
-    for j = 1:numel(list_segmentation_files)
+    parfor j = 1:numel(list_segmentation_files)
 
         % load the data:
         data = organoids2.utilities.load_structure_from_file(list_segmentation_files(j).name);
@@ -64,7 +64,7 @@ function measure_features
         end
 
         % save the features:
-        save(sprintf('features_%s.mat', name_stack), 'features');
+        organoids2.utilities.save_within_parfor_loop(sprintf('features_%s.mat', name_stack), features);
         
     end
 

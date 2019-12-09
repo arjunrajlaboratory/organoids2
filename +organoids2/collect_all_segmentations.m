@@ -12,7 +12,7 @@ function collect_all_segmentations
     num_stacks = numel(list_image_stacks);
     
     % for each image stack:
-    for i = 1:num_stacks
+    parfor i = 1:num_stacks
         
         % get the name of the stack:
         name_stack = list_image_stacks{i};
@@ -44,7 +44,7 @@ function collect_all_segmentations
         data = organoids2.collect_all_segmentations.get_coords_in_um(data);
         
         % save the segmentations:
-        save(sprintf('all_segmentations_%s.mat', name_stack), 'data');
+        organoids2.utilities.save_within_parfor_loop(sprintf('all_segmentations_%s.mat', name_stack), data);
         
     end
     
