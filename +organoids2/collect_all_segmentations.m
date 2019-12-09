@@ -33,7 +33,7 @@ function collect_all_segmentations
         
         % format the data (convert coords to um and get structure per 3D
         % object)
-        data = organoids2.collect_all_segmentations.format_data(data);
+        data = organoids2.collect_all_segmentations.format_data(data, name_stack);
         
         % re-arrange the segmentations into a structure reflecting their
         % heirarchy (ie buds    and cysts belong to an organoid, cells belong

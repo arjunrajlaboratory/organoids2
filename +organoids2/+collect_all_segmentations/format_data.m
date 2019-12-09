@@ -1,4 +1,4 @@
-function data = format_data(data)
+function data = format_data(data, name_stack)
 
     % get a list of segmentations and cell types:
     list_fields = fieldnames(data.segmentations);
@@ -19,7 +19,7 @@ function data = format_data(data)
         if (contains('organoid', name_segmentation) || contains('cyst', name_segmentation)) && numel(segmentations_temp_3D) > 1
             
             % give the user an error:
-            error(sprintf('There are two 3D %s objects! Go back and fix the segmentations.', name_segmentation));
+            error(sprintf('There are two 3D %s objects for %s! Go back and fix the segmentations.', name_segmentation, name_stack));
             
         end
         
