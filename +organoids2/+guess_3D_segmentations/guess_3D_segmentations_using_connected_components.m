@@ -23,7 +23,7 @@ function guess_3D_segmentations_using_connected_components
         
         % load the segmentations:
         segmentations = organoids2.utilities.load_structure_from_file(list_files(i).name);
-        
+
         % assign 3D object number:
         segmentations = assign_3D_object_number(segmentations, image_height, image_width, image_depth);
         

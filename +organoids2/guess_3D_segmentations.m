@@ -1,7 +1,7 @@
 function guess_3D_segmentations(varargin)
 
     % set the list of segmentation methods:
-    list_segmentation_methods = {'using orthogonal segmentations', 'using connected components'};
+    list_segmentation_methods = {'using orthogonal segmentations', 'using connected components', 'using all connected'};
 
     % if the user supplied a single input:
     if nargin == 1
@@ -27,6 +27,10 @@ function guess_3D_segmentations(varargin)
         case 'using connected components'
             
             organoids2.guess_3D_segmentations.guess_3D_segmentations_using_connected_components;
+            
+        case 'using all connected'
+            
+            organoids2.guess_3D_segmentations.guess_3D_segmentations_using_all_connected;
             
     end
 
