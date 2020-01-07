@@ -1,9 +1,9 @@
-function height = measure_height(seg)
+function radius_Z = measure_radius_Z(seg)
 
     % if there are NO objects:
     if ~isstruct(seg)
         
-        height = NaN;
+        radius_Z = NaN;
         
     % otherwise:
     else
@@ -12,13 +12,13 @@ function height = measure_height(seg)
         num_objects = numel(seg);
 
         % create array to store height:
-        height = zeros(num_objects, 1);
+        radius_Z = zeros(num_objects, 1);
 
         % for each object:
         for i = 1:num_objects
 
             % get height:
-            height(i) = range(seg(i).boundary_um(:,3));
+            radius_Z(i) = range(seg(i).boundary_um(:,3));
 
         end
         

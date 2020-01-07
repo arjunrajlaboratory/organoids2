@@ -1,4 +1,4 @@
-function radius = measure_radius(objects, masks, pixel_size_x, method)
+function radius = measure_radius_XY(objects, masks, pixel_size_x, method)
 
     % if there are NO objects:
     if ischar(objects)
@@ -43,11 +43,12 @@ function radius = measure_radius(objects, masks, pixel_size_x, method)
             % depending on the method to calculate radius:
             switch method
             
-                case 'normal'
+                case 'XY'
                     
                     % get the centroid of the mask:
                     centroid = regionprops(mask_to_use, 'Centroid');
                     centroid = centroid.Centroid;
+                    centroid = fliplr(centroid);
 
                     % get all coordinates for the object on this slice:
                     boundary_coords = objects(i).boundary;
