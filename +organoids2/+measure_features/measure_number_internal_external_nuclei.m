@@ -15,13 +15,24 @@ function [number_nuclei_internal, number_nuclei_external] = measure_number_inter
            coords_lumens_all = [coords_lumens_all; seg_lumens(i).boundary]; 
         end
         
-        % determine which nuclear centroids are within the convex hull of
-        % the lumens:
-        inside = tsearchn(coords_lumens_all, delaunay(coords_lumens_all), coords_nuclei_centroid);
-        
-        % get the number of internal and external nuclei:
-        number_nuclei_internal = nnz(~isnan(inside));
-        number_nuclei_external = nnz(isnan(inside));
+        % if the lumens are coplanar:
+        if numel(unique(coords_lumens_all(:,3))) == 1
+            
+            % get the number of internal and external nuclei:
+            number_nuclei_internal = 0;
+            number_nuclei_external = numel(seg_nuclei);
+           
+        % otherwise:
+        else
+            
+            % determine which nuclear centroids are within the convex hull of the lumens:
+            inside = tsearchn(coords_lumens_all, delaunay(coords_lumens_all), coords_nuclei_centroid);
+            
+            % get the number of internal and external nuclei:
+            number_nuclei_internal = nnz(~isnan(inside));
+            number_nuclei_external = nnz(isnan(inside));
+            
+        end
         
     % otherwise:
     else
