@@ -7,7 +7,7 @@ function measure_features
     list_segmentation_files = dir('all_segmentations*.mat');
     
     % for each file:
-    parfor j = 1:numel(list_segmentation_files)
+    for j = 1:numel(list_segmentation_files)
 
         % load the data:
         data = organoids2.utilities.load_structure_from_file(list_segmentation_files(j).name);
@@ -96,7 +96,7 @@ function features = measure_features_for_a_data_set(segmentations_all, name_data
     end
         
     % get the cropped segmentations:
-    [segmentations_all, slice_middle] = organoids2.measure_features.crop_segmentations(segmentations_all, method_crop, image_height, image_width, image_depth);
+    [segmentations_all, features.slice_middle] = organoids2.measure_features.crop_segmentations(segmentations_all, method_crop, image_height, image_width, image_depth);
     
     %%% Next, we want to measure all the features that involve a single
     %%% segmentation type.
@@ -158,8 +158,8 @@ function features = measure_features_for_a_data_set(segmentations_all, name_data
         switch name_segmentation
             case {'organoid', 'buds', 'cyst', 'lumens', 'nuclei'}
                 radius_XY = organoids2.measure_features.measure_radius_XY(segmentations_temp, masks_temp, voxel_size(1), 'XY');
-                features.(sprintf('feature_radius_%s_mean', name_segmentation)) = mean(radius_XY);
-                features.(sprintf('feature_radius_%s_st_dev', name_segmentation)) = std(radius_XY);
+                features.(sprintf('feature_radius_XY_%s_mean', name_segmentation)) = mean(radius_XY);
+                features.(sprintf('feature_radius_XY_%s_st_dev', name_segmentation)) = std(radius_XY);
         end
         
         % major axis (XY):
@@ -215,7 +215,7 @@ function features = measure_features_for_a_data_set(segmentations_all, name_data
             case {'organoid'}
                 radius_3D = organoids2.measure_features.measure_radius_3D(segmentations_temp, voxel_size(3));
                 features.(sprintf('feature_radius_3D_%s_st_dev', name_segmentation)) = std(radius_3D);
-                features.(sprintf('feature_radius_3D_%s_c_v', name_segmentation)) = mean(radius_3D) / std(radius_3D);
+                features.(sprintf('feature_radius_3D_%s_c_v', name_segmentation)) = std(radius_3D) / mean(radius_3D);
         end
         
     end
@@ -234,9 +234,11 @@ function features = measure_features_for_a_data_set(segmentations_all, name_data
     features.feature_external_cell_height_st_dev = std(external_cell_height);
     
     % external cell width:
-    external_cell_width = organoids2.measure_features.measure_external_cell_width(segmentations_all.lumens, segmentations_all.nuclei);
-    features.feature_external_cell_width_mean = mean(external_cell_width);
-    features.feature_external_cell_width_st_dev = std(external_cell_width);
+    if nnz(contains(list_segmentation_types, 'nuclei'))
+        external_cell_width = organoids2.measure_features.measure_external_cell_width(segmentations_all.lumens, segmentations_all.nuclei);
+        features.feature_external_cell_width_mean = mean(external_cell_width);
+        features.feature_external_cell_width_st_dev = std(external_cell_width);
+    end
     
     % fractional volume:
     if nnz(contains(list_segmentation_types, 'buds'))
