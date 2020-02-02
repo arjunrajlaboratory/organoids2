@@ -48,7 +48,6 @@ function radius = measure_radius_XY(objects, masks, pixel_size_x, method)
                     % get the centroid of the mask:
                     centroid = regionprops(mask_to_use, 'Centroid');
                     centroid = centroid.Centroid;
-                    centroid = fliplr(centroid);
 
                     % get all coordinates for the object on this slice:
                     boundary_coords = objects(i).boundary;
