@@ -34,7 +34,7 @@ function varargout = gui(image_max, num_channels)
     menu_height = figure_height - 3*margin - image_height;
     
     % set master list of channels:
-    list_channels = {'gfp', 'dapi', 'cy3', '594'};
+    list_channels = {'gfp', 'dapi', 'tmr', 'alexa', 'cy5'};
     
     % set default channels:
     channels = list_channels(1:num_channels);
