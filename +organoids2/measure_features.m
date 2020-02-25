@@ -141,7 +141,7 @@ function features = measure_features_for_a_data_set(segmentations_all, name_data
         % surface area:
         switch name_segmentation
             case {'organoid', 'buds', 'cyst', 'lumens', 'nuclei'}
-                surface_area = organoids2.measure_features.measure_surface_area(segmentations_temp);
+                surface_area = organoids2.measure_features.measure_surface_area(segmentations_temp, masks_temp, voxel_size(1), voxel_size(3), 'slice approximation');
                 features.(sprintf('feature_surface_area_%s_mean', name_segmentation)) = mean(surface_area);
                 features.(sprintf('feature_surface_area_%s_st_dev', name_segmentation)) = std(surface_area);
         end
@@ -276,30 +276,5 @@ function features = measure_features_for_a_data_set(segmentations_all, name_data
     if nnz(contains(list_segmentation_types, 'nuclei'))
         features.feature_cell_volume_mean = organoids2.measure_features.measure_cell_volume(features.feature_volume_organoid_mean, features.feature_volume_total_lumens, features.feature_number_nuclei);
     end
-    
-%         %% Next, we want to measure any features involving cell type:
-%         
-%         % if there is cell type data:
-%         if isfield(segmentations, 'cells')
-%             
-%             % for each cell type:
-%             for i = 1:numel(segmentations.cells)
-%                 
-%                 % get the number of cells in the organoid:
-%                 features.(sprintf('feature_num_cells_%s', segmentations.cells(i).type)) = organoids2.measure_features.measure_num_cell_type(segmentations.cells(i).coordinates);
-% 
-%                 % get the cell height:
-%                 heights = organoids2.measure_features.measure_cell_height(segmentations.cells(i).coordinates_um, voxel_size(3));
-%                 features.(sprintf('feature_height_mean_%s', segmentations.cells(i).type)) = mean(heights);
-%                 features.(sprintf('feature_height_st_dev_%s', segmentations.cells(i).type)) = std(heights);
-% 
-%                 % get the distance to the nearest cell of the same type:
-%                 cell_neighbor_distance = organoids2.measure_features.measure_distance_to_nearest_cell(segmentations.cells(i).coordinates_um);
-%                 features.(sprintf('feature_distance_nearest_neighbor_mean_%s', segmentations.cells(i).type)) = mean(cell_neighbor_distance);
-%                 features.(sprintf('feature_distance_nearest_neighbor_st_dev_%s', segmentations.cells(i).type)) = std(cell_neighbor_distance);
-%                 
-%             end
-% 
-%         end
 
 end
