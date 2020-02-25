@@ -152,8 +152,17 @@ function segmentations_child_new = get_child_segmentations_within_parent(segment
                         mask_temp = [mask_y, mask_x];
 
                         % get the boundary coords:
-                        boundary_temp = bwboundaries(mask_overlap_slice);
-                        boundary_temp = fliplr(boundary_temp{1});
+                        boundary_all = bwboundaries(mask_overlap_slice);
+                        for k = 1:numel(boundary_all)
+                           if k == 1
+                               boundary_temp = fliplr(boundary_all{k});
+                           else
+                               boundary_temp = [boundary_temp; fliplr(boundary_all{k})];
+                           end
+                        end
+                        
+%                         boundary_temp = bwboundaries(mask_overlap_slice);
+%                         boundary_temp = fliplr(boundary_temp{1});
 
                         % add slice to the coords:
                         mask_temp(:,3) = deal(j);
