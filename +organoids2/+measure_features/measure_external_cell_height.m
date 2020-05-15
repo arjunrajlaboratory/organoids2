@@ -11,6 +11,8 @@ function external_cell_height = measure_external_cell_height(method, seg_lumens,
                 external_cell_height = measure_using_nearest_lumen_point(seg_lumens, seg_organoid);
                 
         end
+        
+        external_cell_height = mean(external_cell_height);
     
     % otherwise:
     else
