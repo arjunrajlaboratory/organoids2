@@ -7,9 +7,18 @@ function prepare_2D_segmentations_for_review
     % if that structure is nuclei:
     if strcmp(structure_to_segment, 'nuclei')
         
-        % format the results from nucleaizer:
-        process_nucleaizer_results('slices_XY', 'nuclei_XY');
-        process_nucleaizer_results('slices_XZ', 'nuclei_XZ');
+        if exist('slices_XY', 'dir') && exist('slices_XZ', 'dir')
+        
+            % format the results from nucleaizer:
+            process_nucleaizer_results('slices_XY', 'nuclei_XY');
+            process_nucleaizer_results('slices_XZ', 'nuclei_XZ');
+        
+        elseif exist('cellpose_images', 'dir') && exist('cellpose_results', 'dir')
+            
+            % format the results from cellpose:
+            process_cellpose_results;
+            
+        end
         
     end
 
@@ -93,6 +102,102 @@ function prepare_2D_segmentations_for_review
 
 end
 
+% function to format cellpose results:
+function process_cellpose_results
+
+    % get a list of result files:
+    list_results = dir(fullfile('cellpose_results', '*.tif'));
+    list_results = extractfield(list_results, 'name');
+
+    % get list of stacks:
+    list_stacks = unique(cellfun(@(x) x(1:9), list_results, 'UniformOutput', false));
+
+    % for each stack:
+    for index_stack = 1:numel(list_stacks)
+
+        % get name and type of stack:
+        name_stack = list_stacks{index_stack};
+        type_stack = name_stack(1:2);
+
+        % get result files for the stack:
+        list_results_for_stack = list_results(contains(list_results, name_stack));
+        
+        % create structure to store results:
+        results = struct;
+        results.slice = 1;
+        results.boundary = [];
+        results.mask = [];
+
+        % for each result file:
+        for index_slice = 1:numel(list_results_for_stack)
+
+            % get the slice number:
+            name_slice = list_results_for_stack{index_slice};
+            num_slice = str2double(name_slice(strfind(name_slice, '_s') + 2:strfind(name_slice, '_s') + 4));
+
+            % load the result:
+            mask = imread(fullfile('cellpose_results', name_slice));
+
+            % if there are any objects:
+            if nnz(mask) ~= 0
+
+                % format the results into coordinates:
+                results_slice = convert_cellpose_mask_to_coordinates(mask, num_slice);
+
+                % save the results:
+                results = [results, results_slice];
+
+
+            end
+
+        end
+        
+        % remove the first placeholder:
+        results(1) = [];
+
+        % add a segmentation id:
+        for index_segmentation = 1:numel(results)
+            results(index_segmentation).segmentation_id = index_segmentation;
+        end
+        
+        % save:
+        save(sprintf('nuclei_%s_guess_2D_%s.mat', type_stack, name_stack(4:9)), 'results');
+
+    end
+    
+end
+
+% function to convert cellpose mask to coordinates:
+function results = convert_cellpose_mask_to_coordinates(mask, num_slice)
+    
+    list_objects = setdiff(unique(mask), 0)';
+
+    num_objects = numel(list_objects);
+    
+    colors = hsv(num_objects);
+    colors = colors * (2^16 - 1);
+        
+    [results(1:num_objects).slice] = deal(0);
+    [results(1:num_objects).boundary] = deal([]);
+    [results(1:num_objects).mask] = deal([]);
+    
+    for index_object = 1:num_objects
+        
+        mask_object = mask == list_objects(index_object);
+        
+        object_boundary = bwboundaries(mask_object, 'noholes');
+        object_boundary = object_boundary{1};
+        
+        [coords_boundary, coords_mask] = organoids2.utilities.get_boundary_and_mask_from_coords(object_boundary(:,2), object_boundary(:,1), size(mask, 2), size(mask, 1), num_slice);
+        
+        results(index_object).slice = num_slice;
+        results(index_object).boundary = coords_boundary;
+        results(index_object).mask = coords_mask;
+                        
+    end
+
+end
+
 % function to format nucleaizer results:
 function process_nucleaizer_results(folder, structure_name)
 
@@ -133,9 +238,6 @@ function process_nucleaizer_results(folder, structure_name)
 
                 % get the mask for just that object:
                 mask_object = mask == list_object_nums(k);
-
-%                 % erode the mask:
-%                 mask_object = imerode(mask_object, strel('disk', 1));
 
                 % get the boundary:
                 boundary = bwboundaries(mask_object);

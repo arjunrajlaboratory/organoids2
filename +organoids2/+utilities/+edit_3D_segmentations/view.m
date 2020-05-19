@@ -1,6 +1,9 @@
 classdef view < handle
     
     properties
+        
+        % set keyboard shortcuts:
+        shortcut_draw = 'f';
 
         % add GUI components:
         handle_figure;
@@ -17,8 +20,11 @@ classdef view < handle
         handle_navigation_slice_current;
         handle_navigation_slice_total;
         handle_navigation_slice_previous;
+        handle_navigation_step_size;
 
         handle_tools_draw;
+        
+        handle_all_channels
         
         handle_annotations;
         
@@ -30,56 +36,66 @@ classdef view < handle
     methods
         
         % constructor:
-        function v = view(settings)
+        function v = view(gui_data)
+            
+            % get a list of channels:
+            gui_data.list_channels = unique(cellfun(@(x) x(8:end-4), extractfield(gui_data.list_images, 'name'), 'UniformOutput', false));
+
+            % get the number of channels:
+            gui_data.num_channels = numel(gui_data.list_channels);
            
             % set the margin to use between elements:
             margin =                            0.01;
             
             % set the widths:
             width_figure =                      0.9;
+            width_full =                        1 - 2 * margin;
+            width_third =                       (1 - 4 * margin) / 3;
             width_half =                        (1 - 3 * margin) / 2;
             
-            width_axes =                        width_half;
-            width_tools =                       width_half;
-            width_navigation =                  width_half;
-            width_contrast =                    width_half;
+            width_axes =                        width_full;
+            width_tools =                       width_third;
+            width_channels =                    width_third;
+            width_navigation =                  width_third;
 
-            width_tools_element =               0.2;
-            width_tools_text =                  (1 - (4 * margin) - (2 * width_tools_element));
-            width_tools_label =                 1 - (2 * margin);
+            width_tools_element =               (1 - 3 * margin) / 2;
+            
+            width_channels_toggle =             (1 - (1 + gui_data.num_channels) * margin) / gui_data.num_channels;             
+            width_channels_dropdown =           (1 - (1 + gui_data.num_channels) * margin) / gui_data.num_channels;  
+            width_channels_contrast =           width_full;
             
             width_navigation_element =          (1 - 4 * margin) / 3;
             width_navigation_text =             (1 - 10 * margin) / 9;
             
-            width_contrast_element =            1 - 2 * margin;
-            
             % set the heights:
             height_figure =                     0.8;
-            height_full =                       1 - (2 * margin);
+            height_big =                        0.8;
+            height_small =                      1 - height_big - (3 * margin);
             
-            height_axes =                       height_full;
-            height_navigation =                 0.3;
-            height_contrast =                   0.1;
-            height_tools =                      height_full - (2 * margin) - height_navigation - height_contrast; 
+            height_axes =                       height_big;
+            height_navigation =                 height_small;
+            height_tools =                      height_small; 
+            height_channels =                   height_small; 
             
-            height_tools_element =              (1 - 11 * margin) / 10;
-            height_tools_text =                 (1 - 11 * margin) / 10;
-            height_tools_label =                (1 - 11 * margin) / 10;
+            height_tools_element =              1 - 2 * margin;
             
-            height_navigation_element =         (1 - 3 * margin) / 2;
-            height_navigation_text =            (1 - 3 * margin) / 2;
+            height_channels_dropdown =          0.1;
+            height_channels_contrast =          0.1;
+            height_channels_toggle =            1 - (4 * margin) - height_channels_dropdown - height_channels_contrast - 0.2;
             
-            height_contrast_element =           1 - 2 * margin;
+            height_navigation_element =         (1 - 4 * margin) / 3;
+            height_navigation_text =            (1 - 4 * margin) / 3;
             
             % set the x coords:
             x_figure =                          0;
             
             x_axes =                            margin;
-            x_contrast =                        margin + width_axes + margin;
-            x_navigation =                      margin + width_axes + margin;
-            x_tools =                           margin + width_axes + margin;
-
-            x_contrast_slider =                 margin;
+            
+            x_channels =                        margin;
+            x_tools =                           margin + width_channels + margin;
+            x_navigation =                      margin + width_channels + margin + width_tools + margin;
+            
+            x_channels_contrast =               margin;
 
             x_navigation_stack_previous =       margin;
             x_navigation_stack_current =        margin + width_navigation_element + margin;
@@ -91,36 +107,22 @@ classdef view < handle
             x_navigation_slice_divider =        margin + width_navigation_element + margin + width_navigation_text + margin;
             x_navigation_slice_total =          margin + width_navigation_element + margin + width_navigation_text + margin + width_navigation_text + margin;
             x_navigation_slice_next =           margin + width_navigation_element + margin + width_navigation_text + margin + width_navigation_text + margin + width_navigation_text + margin;
+            x_navigation_step_label =           margin;
+            x_navigation_step_size =            margin + width_navigation_element + margin;
             
-            x_tools_grow_button =               margin;
-            x_tools_grow_text =                 margin + width_tools_element + margin;
-            x_tools_grow_number =               margin + width_tools_element + margin + width_tools_text + margin;
-            x_tools_split_button =              margin;
-            x_tools_split_text =                margin + width_tools_element + margin;
-            x_tools_redraw_button =             margin;
-            x_tools_redraw_text =               margin + width_tools_element + margin;
-            x_tools_label_edit =                margin;
             x_tools_draw_button =               margin;
-            x_tools_draw_text =                 margin + width_tools_element + margin;
-            x_tools_flood_button =              margin;
-            x_tools_flood_text =                margin + width_tools_element + margin;
-            x_tools_flood_number =              margin + width_tools_element + margin + width_tools_text + margin;
-            x_tools_automatic_button =          margin;
-            x_tools_automatic_text =            margin + width_tools_element + margin;
-            x_tools_label_add =                 margin;
-            x_tools_delete_button =             margin;
-            x_tools_delete_text =               margin + width_tools_element + margin;
-            x_tools_label_delete =              margin;
 
             % set the y coords:
             y_figure =                          0;
             
-            y_axes =                            margin;
-            y_contrast =                        margin;
-            y_navigation =                      margin + height_contrast + margin;
-            y_tools =                           margin + height_contrast + margin+ height_navigation + margin;
+            y_navigation =                      margin;
+            y_tools =                           margin;
+            y_channels =                        margin;
+            y_axes =                            margin + height_small + margin;
             
-            y_contrast_slider =                 margin - 0.4;
+            y_channels_contrast =               margin;
+            y_channels_dropdown =               margin + height_channels_contrast + margin + 0.1;
+            y_channels_toggle =                 margin + height_channels_contrast + margin + height_channels_dropdown + margin + 0.2;
 
             y_navigation_stack_previous =       margin;
             y_navigation_stack_current =        margin;
@@ -132,26 +134,10 @@ classdef view < handle
             y_navigation_slice_divider =        margin + height_navigation_element + margin;
             y_navigation_slice_total =          margin + height_navigation_element + margin;
             y_navigation_slice_next =           margin + height_navigation_element + margin;
+            y_navigation_step_label =           margin + height_navigation_element + margin + height_navigation_element + margin;
+            y_navigation_step_size =            margin + height_navigation_element + margin + height_navigation_element + margin;
             
-            y_tools_grow_button =               margin;
-            y_tools_grow_text =                 margin;
-            y_tools_grow_number =               margin;
-            y_tools_split_button =              margin + height_tools_element + margin;
-            y_tools_split_text =                margin + height_tools_element + margin;
-            y_tools_redraw_button =             margin + height_tools_element + margin + height_tools_element + margin;
-            y_tools_redraw_text =               margin + height_tools_element + margin + height_tools_element + margin;
-            y_tools_label_edit =                margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin;
-            y_tools_draw_button =               margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin;
-            y_tools_draw_text =                 margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin;
-            y_tools_flood_button =              margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin;
-            y_tools_flood_text =                margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin;
-            y_tools_flood_number =              margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin;
-            y_tools_automatic_button =          margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin;
-            y_tools_automatic_text =            margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin;
-            y_tools_label_add =                 margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin;
-            y_tools_delete_button =             margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin;
-            y_tools_delete_text =               margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin;
-            y_tools_label_delete =              margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin + height_tools_element + margin;
+            y_tools_draw_button =               margin;
 
             % set the colors:
             color_text = 'white';
@@ -159,7 +145,7 @@ classdef view < handle
             color_button = [0.25 0.25 0.25];
             
             % create the figure:
-            v.handle_figure = figure('Visible', 'off');
+            v.handle_figure = figure('Visible', 'on');
             v.handle_figure.Units = 'normalized';
             v.handle_figure.Position = [x_figure y_figure width_figure height_figure];
             v.handle_figure.Color = color_background;
@@ -167,15 +153,7 @@ classdef view < handle
             % create the image axes:
             v.handle_axes = axes(v.handle_figure);
             v.handle_axes.Units = 'normalized';
-            v.handle_axes.Position = [x_axes y_axes width_half height_axes];
-            
-            % create the contrast group:
-            handle_contrast = uibuttongroup(v.handle_figure);
-            handle_contrast.Units = 'normalized';
-            handle_contrast.Position = [x_contrast y_contrast width_contrast height_contrast];
-            handle_contrast.Title = 'Contrast';
-            handle_contrast.BackgroundColor = color_background;
-            handle_contrast.ForegroundColor = color_text;
+            v.handle_axes.Position = [x_axes y_axes width_axes height_axes];
             
             % create the navigation group:
             handle_navigation = uibuttongroup(v.handle_figure);
@@ -193,10 +171,18 @@ classdef view < handle
             handle_tools.BackgroundColor = color_background;
             handle_tools.ForegroundColor = color_text;
             
+            % create the channels group:
+            handle_channels = uibuttongroup(v.handle_figure);
+            handle_channels.Units = 'normalized';
+            handle_channels.Position = [x_channels y_channels width_channels height_channels];
+            handle_channels.Title = 'Channels';
+            handle_channels.BackgroundColor = color_background;
+            handle_channels.ForegroundColor = color_text;
+            
             % create the contrast slider:
-            v.handle_contrast_slider = uicontrol(handle_contrast);
+            v.handle_contrast_slider = uicontrol(handle_channels);
             v.handle_contrast_slider.Units = 'normalized';
-            v.handle_contrast_slider.Position = [x_contrast_slider y_contrast_slider width_contrast_element height_contrast_element];
+            v.handle_contrast_slider.Position = [x_channels_contrast y_channels_contrast width_channels_contrast height_channels_contrast];
             v.handle_contrast_slider.Style = 'slider';
             v.handle_contrast_slider.Min = 0;
             v.handle_contrast_slider.Max = 1;
@@ -206,7 +192,7 @@ classdef view < handle
             v.handle_navigation_stack_previous = uicontrol(handle_navigation);
             v.handle_navigation_stack_previous.Units = 'normalized';
             v.handle_navigation_stack_previous.Position = [x_navigation_stack_previous y_navigation_stack_previous width_navigation_element height_navigation_element];
-            v.handle_navigation_stack_previous.String = 'Previous Stack';
+            v.handle_navigation_stack_previous.String = '<html> Previous Stack (&darr) </html>';
             v.handle_navigation_stack_previous.Style = 'pushbutton';
             v.handle_navigation_stack_previous.BackgroundColor = color_button;
             v.handle_navigation_stack_previous.ForegroundColor = color_text;
@@ -242,7 +228,7 @@ classdef view < handle
             v.handle_navigation_stack_next = uicontrol(handle_navigation);
             v.handle_navigation_stack_next.Units = 'normalized';
             v.handle_navigation_stack_next.Position = [x_navigation_stack_next y_navigation_stack_next width_navigation_element height_navigation_element];
-            v.handle_navigation_stack_next.String = 'Next Stack';
+            v.handle_navigation_stack_next.String = '<html> Next Stack (&uarr) </html>';
             v.handle_navigation_stack_next.Style = 'pushbutton';
             v.handle_navigation_stack_next.BackgroundColor = color_button;
             v.handle_navigation_stack_next.ForegroundColor = color_text;
@@ -251,7 +237,7 @@ classdef view < handle
             v.handle_navigation_slice_previous = uicontrol(handle_navigation);
             v.handle_navigation_slice_previous.Units = 'normalized';
             v.handle_navigation_slice_previous.Position = [x_navigation_slice_previous y_navigation_slice_previous width_navigation_element height_navigation_element];
-            v.handle_navigation_slice_previous.String = 'Previous Slice';
+            v.handle_navigation_slice_previous.String = '<html> Previous Slice (&larr) </html>';
             v.handle_navigation_slice_previous.Style = 'pushbutton';
             v.handle_navigation_slice_previous.BackgroundColor = color_button;
             v.handle_navigation_slice_previous.ForegroundColor = color_text;
@@ -287,52 +273,89 @@ classdef view < handle
             v.handle_navigation_slice_next = uicontrol(handle_navigation);
             v.handle_navigation_slice_next.Units = 'normalized';
             v.handle_navigation_slice_next.Position = [x_navigation_slice_next y_navigation_slice_next width_navigation_element height_navigation_element];
-            v.handle_navigation_slice_next.String = 'Next Slice';
+            v.handle_navigation_slice_next.String = '<html> Next Slice (&rarr) </html>';
             v.handle_navigation_slice_next.Style = 'pushbutton';
             v.handle_navigation_slice_next.BackgroundColor = color_button;
             v.handle_navigation_slice_next.ForegroundColor = color_text;
+            
+            % create the step size label box:
+            handle_navigation_step_label = uicontrol(handle_navigation);
+            handle_navigation_step_label.Units = 'normalized';
+            handle_navigation_step_label.Position = [x_navigation_step_label y_navigation_step_label width_navigation_element height_navigation_element];
+            handle_navigation_step_label.Style = 'edit';
+            handle_navigation_step_label.String = 'Step Size:';
+            handle_navigation_step_label.Enable = 'inactive';
+            handle_navigation_step_label.BackgroundColor = color_button;
+            handle_navigation_step_label.ForegroundColor = color_text;
+            
+            % create the step size box:
+            v.handle_navigation_step_size = uicontrol(handle_navigation);
+            v.handle_navigation_step_size.Units = 'normalized';
+            v.handle_navigation_step_size.Position = [x_navigation_step_size y_navigation_step_size width_navigation_text height_navigation_text];
+            v.handle_navigation_step_size.Style = 'edit';
+            v.handle_navigation_step_size.BackgroundColor = color_button;
+            v.handle_navigation_step_size.ForegroundColor = color_text;
             
             % create the draw button:
             v.handle_tools_draw = uicontrol(handle_tools);
             v.handle_tools_draw.Units = 'normalized';
             v.handle_tools_draw.Position = [x_tools_draw_button y_tools_draw_button width_tools_element height_tools_element];
-            v.handle_tools_draw.String = 'Draw (d)';
+            v.handle_tools_draw.String = sprintf('Draw (%s)', v.shortcut_draw);
             v.handle_tools_draw.BackgroundColor = color_button;
             v.handle_tools_draw.ForegroundColor = color_text;
+            v.handle_tools_draw.Tooltip = 'Draw a segmentation.';
             
-            % create the draw instructions box:
-            handle_tools_draw_instructions = uicontrol(handle_tools);
-            handle_tools_draw_instructions.Units = 'normalized';
-            handle_tools_draw_instructions.Position = [x_tools_draw_text y_tools_draw_text width_tools_text height_tools_text];
-            handle_tools_draw_instructions.Style = 'text';
-            handle_tools_draw_instructions.Enable = 'inactive';
-            handle_tools_draw_instructions.String = 'Draw a segmentation.';
-            handle_tools_draw_instructions.BackgroundColor = color_background;
-            handle_tools_draw_instructions.ForegroundColor = color_text;
-            handle_tools_draw_instructions.HorizontalAlignment = 'Left';
-           
-            % edit GUI to the center of the screen:
-            movegui(v.handle_figure, 'center');
+            % for each channel:
+            for i = 1:gui_data.num_channels
+                
+                % create the channel toggles:
+                temp_handle_pushbutton = sprintf('pushbutton_%01d', i);
+                v.handle_all_channels.(temp_handle_pushbutton) = uicontrol(handle_channels);
+                v.handle_all_channels.(temp_handle_pushbutton).Units = 'normalized';
+                v.handle_all_channels.(temp_handle_pushbutton).Position = [((margin * i) + ((i-1)*(width_channels_toggle))) y_channels_toggle width_channels_toggle height_channels_toggle];
+                v.handle_all_channels.(temp_handle_pushbutton).Style = 'pushbutton';
+                v.handle_all_channels.(temp_handle_pushbutton).String = gui_data.list_channels{i};
+                v.handle_all_channels.(temp_handle_pushbutton).BackgroundColor = color_button;
+                v.handle_all_channels.(temp_handle_pushbutton).ForegroundColor = color_text;
+                
+                % create the channel color dropdowns:
+                temp_handle_popupmenu = sprintf('popupmenu_%01d', i);
+                v.handle_all_channels.(temp_handle_popupmenu) = uicontrol(handle_channels);
+                v.handle_all_channels.(temp_handle_popupmenu).Units = 'normalized';
+                v.handle_all_channels.(temp_handle_popupmenu).Position = [((margin * i) + ((i-1)*(width_channels_dropdown))) y_channels_dropdown width_channels_dropdown height_channels_dropdown];
+                v.handle_all_channels.(temp_handle_popupmenu).Style = 'popupmenu';
+                v.handle_all_channels.(temp_handle_popupmenu).String = {'hi'};
+                v.handle_all_channels.(temp_handle_popupmenu).BackgroundColor = color_button;
+                
+            end
             
             % set callbacks for the figure:
             v.handle_figure.KeyPressFcn = @v.callback_key_press;
 
             % hook up to the controller to the view:
-            v.c = organoids2.review_3D_segmentations.controller(v, settings);
+            v.c = organoids2.utilities.edit_3D_segmentations.controller(v, gui_data);
             
-            % hook up the view to the controller:
-            vc = v.c; 
-            v.handle_contrast_slider.Callback =             {@vc.callback_contrast};
-            v.handle_navigation_stack_previous.Callback =   {@vc.callback_stack_previous};
-            v.handle_navigation_stack_current.Callback =    {@vc.callback_stack_current};
-            v.handle_navigation_stack_next.Callback =       {@vc.callback_stack_next};
-            v.handle_navigation_slice_previous.Callback =   {@vc.callback_slice_previous};
-            v.handle_navigation_slice_current.Callback =    {@vc.callback_slice_current};
-            v.handle_navigation_slice_next.Callback =       {@vc.callback_slice_next};
-            v.handle_tools_draw.Callback =                  {@vc.callback_draw};
-
+            % hook up the view to the controller: 
+            vc = v.c; % annoying syntax required by matlab
+            v.handle_contrast_slider.Callback =                                 {@vc.callback_contrast};
+            v.handle_navigation_stack_previous.Callback =                       {@vc.callback_stack_previous};
+            v.handle_navigation_stack_current.Callback =                        {@vc.callback_stack_current};
+            v.handle_navigation_stack_next.Callback =                           {@vc.callback_stack_next};
+            v.handle_navigation_slice_previous.Callback =                       {@vc.callback_slice_previous};
+            v.handle_navigation_slice_current.Callback =                        {@vc.callback_slice_current};
+            v.handle_navigation_slice_next.Callback =                           {@vc.callback_slice_next};
+            v.handle_navigation_step_size.Callback =                            {@vc.callback_step_size};
+            v.handle_tools_draw.Callback =                                      {@vc.callback_draw};
+            for i = 1:gui_data.num_channels
+               v.handle_all_channels.(sprintf('pushbutton_%01d', i)).Callback =     {@vc.callback_channels_change_visibility, i}; 
+               v.handle_all_channels.(sprintf('popupmenu_%01d', i)).Callback =      {@vc.callback_channels_change_color, i};
+            end
+            
             % make all text larger:
             set(findall(gcf, '-property', 'FontSize'), 'FontSize', 16);
+            
+            % edit GUI to the center of the screen:
+            movegui(v.handle_figure, 'center');
             
             % make the figure window visible:
             v.handle_figure.Visible = 'on';
@@ -355,9 +378,8 @@ classdef view < handle
                     v.c.callback_stack_previous(src, eventdata);
                 case 'uparrow'
                     v.c.callback_stack_next(src, eventdata);
-                case 'd'
+                case v.shortcut_draw 
                     v.c.callback_draw(src, eventdata);
-
             end
             
         end
