@@ -37,22 +37,46 @@ classdef model < handle
         
         % add segmentation:
         function m = change_object_number(m, indices_new_object)
-            
-            % get list of all possible object nums:
-            list_object_nums = 1:m.max_num_objects;
 
-            % get list of used object nums:
-            list_object_nums_used = unique(extractfield(m.segmentations, 'object_num'));
+            % get list of current object numbers:
+            list_object_nums = extractfield(m.segmentations(indices_new_object), 'object_num');
             
-            % get list of unused object nums:
-            list_object_nums_unused = setdiff(list_object_nums, list_object_nums_used);
+            % get a list of unique object numbers:
+            list_object_nums_unique = unique(list_object_nums);
             
-            % choose unused object num at random:
-            object_num = datasample(list_object_nums_unused, 1, 'Replace', false);
+            if numel(list_object_nums_unique) == 1
+                
+                % get list of all possible object nums:
+                list_object_nums = 1:m.max_num_objects;
+
+                % get list of used object nums:
+                list_object_nums_used = unique(extractfield(m.segmentations, 'object_num'));
+
+                % get list of unused object nums:
+                list_object_nums_unused = setdiff(list_object_nums, list_object_nums_used);
+
+                % choose unused object num at random:
+                new_object_num = datasample(list_object_nums_unused, 1, 'Replace', false);
+                
+            else
+            
+                % get the frequency of each object numbert:
+                list_object_counts = zeros(size(list_object_nums_unique), 'like', list_object_nums_unique);
+                for i = 1:numel(list_object_nums_unique)
+                   list_object_counts(i) = nnz(list_object_nums == list_object_nums_unique(i)); 
+                end
+
+                % use the most frequent object number:
+                [~, index_biggest_object] = max(list_object_counts);
+                new_object_num = list_object_nums_unique(index_biggest_object);
+            
+            end
+            
+            %%%%%
             
             % update the object numbers:
             for i = 1:numel(indices_new_object)
-               m.segmentations(indices_new_object(i)).object_num = object_num; 
+               m.segmentations(indices_new_object(i)).object_num = new_object_num; 
             end
             
         end

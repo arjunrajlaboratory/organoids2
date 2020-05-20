@@ -303,7 +303,6 @@ classdef view < handle
             v.handle_tools_draw.String = sprintf('Draw (%s)', v.shortcut_draw);
             v.handle_tools_draw.BackgroundColor = color_button;
             v.handle_tools_draw.ForegroundColor = color_text;
-            v.handle_tools_draw.Tooltip = 'Draw a segmentation.';
             
             % for each channel:
             for i = 1:gui_data.num_channels

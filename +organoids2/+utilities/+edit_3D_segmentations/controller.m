@@ -119,6 +119,14 @@ classdef controller < handle
             % load the segmentations:
             c.m = organoids2.utilities.edit_3D_segmentations.model(fullfile(c.path_segmentations, c.list_segmentation_files{c.current_stack}));
             
+%             % assign each segmentation a color (based on it's 3D object) -
+%             % useful for debugging:
+%             list_object_nums = unique(extractfield(c.m.segmentations, 'object_num'));
+%             colors = organoids2.utilities.distinguishable_colors(numel(list_object_nums));
+%             for i = 1:numel(c.m.segmentations)
+%                 c.m.segmentations(i).color = colors(list_object_nums == c.m.segmentations(i).object_num, :);
+%             end
+            
             % convert the segmentations to the new reference frame:
             c.m.segmentations = c.convert_XY_coords_to_XZ_coords(c.m.segmentations);
             
@@ -223,6 +231,7 @@ classdef controller < handle
 
                         for k = 1:size(coords_slice, 1)
                             image_display_slice(coords_slice(k, 2), coords_slice(k, 1), :) = colors(list_object_nums == object_num, :) * 65535;
+                            % image_display_slice(coords_slice(k, 2), coords_slice(k, 1), :) = segmentations_slice(i).color * 65535;
                         end
 
                     end
@@ -539,6 +548,14 @@ classdef controller < handle
                 
             end
             
+            % adjust the contrast of each slice - this will make deeper
+            % slices similar brightness to shallow slices
+            for i = 1:size(stack, 4)
+               for j = 1:size(stack, 3)
+                  stack(:,:,j,i) = imadjust(squeeze(stack(:,:,j,i))); 
+               end
+            end
+            
             % change the order of dimensions:
             stack = permute(stack, [3 2 1 4]);
             
@@ -546,6 +563,13 @@ classdef controller < handle
             stack_stretched = zeros([(6 * size(stack, 1)) size(stack, 2) size(stack, 3) size(stack, 4)], 'like', stack);
             for i = 1:size(stack, 4)
                 stack_stretched(:,:,:,i) = imresize3(squeeze(stack(:,:,:,i)), [(6 * size(stack, 1)) size(stack, 2) size(stack, 3)], 'nearest');
+            end
+            
+            % smooth the stack to make the nuclei more round:
+            for i = 1:size(stack_stretched, 4)
+               for j = 1:size(stack_stretched, 3)
+                  stack_stretched(:,:,j,i) = imgaussfilt(squeeze(stack_stretched(:,:,j,i)), [2 0.5]);
+               end
             end
 
         end
