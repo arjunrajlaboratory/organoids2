@@ -1,5 +1,12 @@
 function guess_3D_segmentations_using_orthogonal_segmentations
 
+    % determine which orthogonal segmentations were created:
+    if exist('slices_XY', 'dir') && exist('slices_XZ', 'dir')
+        method = 'nucleaizer';
+    elseif exist('cellpose_images', 'dir') && exist('cellpose_results', 'dir')
+        method = 'cellpose';
+    end
+
     % get the list of segmentation files:
     list_files_XY = dir('nuclei_XY_final_2D*.mat');
     list_files_XZ = dir('nuclei_XZ_final_2D*.mat');
@@ -26,8 +33,12 @@ function guess_3D_segmentations_using_orthogonal_segmentations
         % get the 3D segmentation:
         segmentations_XY = convert_to_3D(segmentations_XY, segmentations_XZ);
         
-        % remove any segmentations that are not connected to any other segmentations:
-        segmentations_XY = remove_unconnected_segmentations(segmentations_XY);
+        % depending on the method used to make the segmentations:
+        switch method
+            case 'nucleaizer'
+                % remove any segmentations that are not connected to any other segmentations:
+                segmentations_XY = remove_unconnected_segmentations(segmentations_XY);
+        end
         
         % remove the segmentation id field:
         if ~ischar(segmentations_XY)
@@ -145,22 +156,22 @@ end
 % function to remove unconnected segmentations:
 function segmentations = remove_unconnected_segmentations(segmentations)
         
-        % get a list of 3D object numbers:
-        list_3D_objects = unique(extractfield(segmentations, 'object_num'));
-        
-        % get the number of 2D objects in each 3D object:
-        number_2D_objects_per_3D_object = zeros(size(list_3D_objects));
-        for i = 1:numel(list_3D_objects)
-            number_2D_objects_per_3D_object(i) = nnz(extractfield(segmentations, 'object_num') == list_3D_objects(i));
-        end
-        
-        % get a list of 3D objects with only 1 member:
-        list_3D_objects_unconnected = list_3D_objects(number_2D_objects_per_3D_object < 2);
-        
-        % for each unconnected object:
-        for i = 1:numel(list_3D_objects_unconnected)
-            [~, rows_remove] = organoids2.utilities.get_structure_results_matching_number(segmentations, 'object_num', list_3D_objects_unconnected(i));
-            segmentations(rows_remove) = [];
-        end
+    % get a list of 3D object numbers:
+    list_3D_objects = unique(extractfield(segmentations, 'object_num'));
+
+    % get the number of 2D objects in each 3D object:
+    number_2D_objects_per_3D_object = zeros(size(list_3D_objects));
+    for i = 1:numel(list_3D_objects)
+        number_2D_objects_per_3D_object(i) = nnz(extractfield(segmentations, 'object_num') == list_3D_objects(i));
+    end
+
+    % get a list of 3D objects with only 1 member:
+    list_3D_objects_unconnected = list_3D_objects(number_2D_objects_per_3D_object < 2);
+
+    % for each unconnected object:
+    for i = 1:numel(list_3D_objects_unconnected)
+        [~, rows_remove] = organoids2.utilities.get_structure_results_matching_number(segmentations, 'object_num', list_3D_objects_unconnected(i));
+        segmentations(rows_remove) = [];
+    end
 
 end
