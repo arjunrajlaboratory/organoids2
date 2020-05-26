@@ -446,31 +446,43 @@ classdef controller < handle
                 % get segmentations on the slice:
                 [segmentations_slice, indices_slice] = organoids2.utilities.get_structure_results_containing_number(c.m.segmentations, 'slice_xz', c.current_slice);
                 
-                % add field to store intersection:
-                [segmentations_slice(1:end).intersect] = deal('no');
+                % if there are any segmentations on the slice:
+                if ~isempty(segmentations_slice)
                 
-                % for each segmentation on the slice:
-                for i = 1:numel(segmentations_slice)
+                    % add field to store intersection:
+                    [segmentations_slice(1:end).intersect] = deal('no');
+
+                    % for each segmentation on the slice:
+                    for i = 1:numel(segmentations_slice)
+
+                        % get coordinates of the segmentation on the slice:
+                        coords = segmentations_slice(i).mask_xz;
+                        coords_slice = coords(coords(:,3) == c.current_slice, :);
+
+                        % check if the object overlaps with the drawn line:
+                        if any(ismember(coords_drawn, coords_slice(:,1:2), 'rows'))
+                            segmentations_slice(i).intersect = 'yes';
+                        end
+
+                    end
+
+                    % get list of segmentation ids that belong to the new
+                    % object:
+                    [~, indices_new_object] = organoids2.utilities.get_structure_results_matching_string(segmentations_slice, 'intersect', 'yes');
                     
-                    % get coordinates of the segmentation on the slice:
-                    coords = segmentations_slice(i).mask_xz;
-                    coords_slice = coords(coords(:,3) == c.current_slice, :);
-                                        
-                    % check if the object overlaps with the drawn line:
-                    if any(ismember(coords_drawn, coords_slice(:,1:2), 'rows'))
-                        segmentations_slice(i).intersect = 'yes';
+                    % if there is a new object:
+                    if ~isempty(indices_new_object)
+                        
+                        % get the indices:
+                        indices_new_object = indices_slice(indices_new_object);
+
+                        % add object to model:
+                        c.m = c.m.change_object_number(indices_new_object);
+                    
                     end
 
                 end
                 
-                % get list of segmentation ids that belong to the new
-                % object:
-                [~, indices_new_object] = organoids2.utilities.get_structure_results_matching_string(segmentations_slice, 'intersect', 'yes');
-                indices_new_object = indices_slice(indices_new_object);
-                
-                % add object to model:
-                c.m = c.m.change_object_number(indices_new_object);
-
                 % update the display:
                 c = update_display(c);
             
