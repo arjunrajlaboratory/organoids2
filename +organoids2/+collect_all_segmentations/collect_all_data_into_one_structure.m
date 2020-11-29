@@ -29,6 +29,20 @@ function data = collect_all_data_into_one_structure(name_stack)
         
             % load the segmentation file:
             segmentations_temp_2D = organoids2.utilities.load_structure_from_file(path_segmentation_file);
+            
+            % if the segmentation file is nuclear:
+            if strcmp(name_segmentation, 'nuclei')
+                
+                % if the nuclear segmentations were analyzed with cellpose:
+                if exist('segmentations_nuclei/cellpose_images', 'dir') == 7
+                
+                    % remove any segmentations not connected to other
+                    % segmentations:
+                    segmentations_temp_2D = remove_unconnected_segmentations(segmentations_temp_2D);
+                
+                end
+                
+            end
 
             % save segmentation:
             segmentations.(name_segmentation) = segmentations_temp_2D;
@@ -68,6 +82,29 @@ function data = collect_all_data_into_one_structure(name_stack)
     data.voxel_size_z = voxel_size_z;
     data.segmentations = segmentations;
     
+end
+
+% function to remove unconnected segmentations:
+function segmentations = remove_unconnected_segmentations(segmentations)
+        
+    % get a list of 3D object numbers:
+    list_3D_objects = unique(extractfield(segmentations, 'object_num'));
+
+    % get the number of 2D objects in each 3D object:
+    number_2D_objects_per_3D_object = zeros(size(list_3D_objects));
+    for i = 1:numel(list_3D_objects)
+        number_2D_objects_per_3D_object(i) = nnz(extractfield(segmentations, 'object_num') == list_3D_objects(i));
+    end
+
+    % get a list of 3D objects with only 1 member:
+    list_3D_objects_unconnected = list_3D_objects(number_2D_objects_per_3D_object < 2);
+
+    % for each unconnected object:
+    for i = 1:numel(list_3D_objects_unconnected)
+        [~, rows_remove] = organoids2.utilities.get_structure_results_matching_number(segmentations, 'object_num', list_3D_objects_unconnected(i));
+        segmentations(rows_remove) = [];
+    end
+
 end
 
 % function to get structure with entry for each 3D cell:
